@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diary Backend API 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .api-section {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .api-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .api-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .method.get { background: #28a745; color: white; }
+        .method.post { background: #007bff; color: white; }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .response.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📔 Diary Backend API</h1>
+            <p>일기 백엔드 API를 쉽게 테스트해보세요</p>
+        </div>
+
+        <div class="content">
+            <!-- Hello API -->
+            <div class="api-section">
+                <h3>🖐️ Hello API</h3>
+                <div class="api-info">
+                    <span class="method get">GET</span>
+                    <span>/api/hello</span>
+                </div>
+                <p>서버 상태와 현재 시간을 확인합니다.</p>
+                <button class="btn" onclick="testHello()">
+                    테스트하기
+                    <span class="loading hidden" id="hello-loading"></span>
+                </button>
+                <div class="response hidden" id="hello-response"></div>
+            </div>
+
+            <!-- Get Diary API -->
+            <div class="api-section">
+                <h3>📖 일기 목록 조회</h3>
+                <div class="api-info">
+                    <span class="method get">GET</span>
+                    <span>/api/diary</span>
+                </div>
+                <p>저장된 모든 일기를 조회합니다.</p>
+                <button class="btn" onclick="getDiaries()">
+                    일기 목록 조회
+                    <span class="loading hidden" id="get-diary-loading"></span>
+                </button>
+                <div class="response hidden" id="get-diary-response"></div>
+            </div>
+
+            <!-- Post Diary API -->
+            <div class="api-section">
+                <h3>✍️ 새 일기 작성</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/diary</span>
+                </div>
+                <p>새로운 일기를 작성합니다.</p>
+                
+                <div class="form-group">
+                    <label for="diary-title">일기 제목:</label>
+                    <input type="text" id="diary-title" placeholder="예: 오늘의 일기">
+                </div>
+                
+                <div class="form-group">
+                    <label for="diary-content">일기 내용:</label>
+                    <textarea id="diary-content" placeholder="오늘 있었던 일을 적어보세요..."></textarea>
+                </div>
+
+                <button class="btn" onclick="createDiary()">
+                    일기 작성하기
+                    <span class="loading hidden" id="post-diary-loading"></span>
+                </button>
+                <div class="response hidden" id="post-diary-response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+
+                const data = await response.json();
+                
+                return {
+                    success: response.ok,
+                    status: response.status,
+                    data: data
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+
+        function showResponse(elementId, result, loadingId) {
+            const responseEl = document.getElementById(elementId);
+            const loadingEl = document.getElementById(loadingId);
+            
+            loadingEl.classList.add('hidden');
+            responseEl.classList.remove('hidden');
+            
+            if (result.success) {
+                responseEl.className = 'response success';
+                responseEl.textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                responseEl.className = 'response error';
+                responseEl.textContent = result.error || `Error ${result.status}: ${JSON.stringify(result.data, null, 2)}`;
+            }
+        }
+
+        async function testHello() {
+            const loadingEl = document.getElementById('hello-loading');
+            loadingEl.classList.remove('hidden');
+            
+            const result = await makeRequest(`${API_BASE_URL}/api/hello`);
+            showResponse('hello-response', result, 'hello-loading');
+        }
+
+        async function getDiaries() {
+            const loadingEl = document.getElementById('get-diary-loading');
+            loadingEl.classList.remove('hidden');
+            
+            const result = await makeRequest(`${API_BASE_URL}/api/diary`);
+            showResponse('get-diary-response', result, 'get-diary-loading');
+        }
+
+        async function createDiary() {
+            const title = document.getElementById('diary-title').value;
+            const content = document.getElementById('diary-content').value;
+            
+            if (!title || !content) {
+                alert('제목과 내용을 모두 입력해주세요.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('post-diary-loading');
+            loadingEl.classList.remove('hidden');
+            
+            const result = await makeRequest(`${API_BASE_URL}/api/diary`, {
+                method: 'POST',
+                body: JSON.stringify({ title, content })
+            });
+            
+            showResponse('post-diary-response', result, 'post-diary-loading');
+            
+            // 성공시 폼 초기화
+            if (result.success) {
+                document.getElementById('diary-title').value = '';
+                document.getElementById('diary-content').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
