@@ -229,6 +229,40 @@
                 </button>
                 <div class="response hidden" id="post-diary-response"></div>
             </div>
+
+            <!-- AI Conversation Analysis API -->
+            <div class="api-section">
+                <h3>🤖 AI 대화 분석</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/analyze-conversation</span>
+                </div>
+                <p>사용자와 AI의 대화를 분석하여 일기 인사이트를 추출합니다.</p>
+                
+                <div class="form-group">
+                    <label for="ai-model">AI 모델 선택:</label>
+                    <select id="ai-model" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <option value="claude">Claude Sonnet 4.0</option>
+                        <option value="oss">GPT-OSS 120B</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="conversation-input">대화 내용 (JSON 형식):</label>
+                    <textarea id="conversation-input" placeholder='[
+  {"role": "user", "content": "오늘 아침에 커피를 마시면서 새로운 책을 읽기 시작했어."},
+  {"role": "assistant", "content": "새로운 책을 시작하는 것은 좋은 습관이네요! 어떤 종류의 책인가요?"},
+  {"role": "user", "content": "자기계발서야. 목표 설정에 관한 내용이고, 올해 운동을 더 열심히 하려고 해."},
+  {"role": "assistant", "content": "운동 목표를 세우신 것 멋지네요! 구체적인 계획이 있으신가요?"}
+]' style="height: 150px;"></textarea>
+                </div>
+
+                <button class="btn" onclick="analyzeConversation()">
+                    대화 분석하기
+                    <span class="loading hidden" id="analyze-loading"></span>
+                </button>
+                <div class="response hidden" id="analyze-response"></div>
+            </div>
         </div>
     </div>
 
@@ -315,6 +349,76 @@
             if (result.success) {
                 document.getElementById('diary-title').value = '';
                 document.getElementById('diary-content').value = '';
+            }
+        }
+
+        async function analyzeConversation() {
+            const conversationInput = document.getElementById('conversation-input').value;
+            const model = document.getElementById('ai-model').value;
+            
+            if (!conversationInput.trim()) {
+                alert('대화 내용을 입력해주세요.');
+                return;
+            }
+
+            let conversation;
+            try {
+                conversation = JSON.parse(conversationInput);
+                if (!Array.isArray(conversation)) {
+                    throw new Error('대화는 배열 형태여야 합니다.');
+                }
+            } catch (error) {
+                alert('올바른 JSON 형식이 아닙니다: ' + error.message);
+                return;
+            }
+
+            const loadingEl = document.getElementById('analyze-loading');
+            loadingEl.classList.remove('hidden');
+            
+            const result = await makeRequest(`${API_BASE_URL}/api/analyze-conversation`, {
+                method: 'POST',
+                body: JSON.stringify({ conversation, model })
+            });
+            
+            showResponse('analyze-response', result, 'analyze-loading');
+            
+            // 성공시 예쁘게 표시
+            if (result.success) {
+                const responseEl = document.getElementById('analyze-response');
+                responseEl.innerHTML = `
+                    <h4>📊 분석 결과 (모델: ${result.model})</h4>
+                    <div style="margin: 10px 0;">
+                        <strong>🎯 오늘의 한줄:</strong><br>
+                        ${result.analysis.todayOneLine}
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>📝 주요 일상:</strong><br>
+                        ${result.analysis.mainActivities.map(activity => `• ${activity}`).join('<br>')}
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>🎯 목표 추적:</strong><br>
+                        ${result.analysis.goalTracking.mentioned ? 
+                            `목표: ${result.analysis.goalTracking.goals.join(', ')}<br>진행상황: ${result.analysis.goalTracking.progress}` : 
+                            '언급된 목표 없음'}
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>🙏 감사한 일들:</strong><br>
+                        ${result.analysis.gratefulFor.map(item => `• ${item}`).join('<br>')}
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>😊 주요 기분:</strong><br>
+                        ${result.analysis.mainMood.emotion} (${result.analysis.mainMood.intensity})<br>
+                        이유: ${result.analysis.mainMood.reason}
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>💡 인사이트:</strong><br>
+                        ${result.analysis.insights}
+                    </div>
+                    <details style="margin-top: 15px;">
+                        <summary>JSON 원본 보기</summary>
+                        <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; white-space: pre-wrap;">${JSON.stringify(result, null, 2)}</pre>
+                    </details>
+                `;
             }
         }
     </script>
