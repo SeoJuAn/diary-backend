@@ -391,7 +391,76 @@
                 <div class="response hidden" id="transcribe-response"></div>
             </div>
 
-            <!-- 3. API 명세서 섹션 -->
+            <!-- 3. 음성 합성 (TTS) API 섹션 -->
+            <div class="api-section">
+                <h3>🔊 음성 합성 (TTS) API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/audio/speech</span>
+                </div>
+                <p class="description">
+                    텍스트를 자연스러운 음성으로 변환합니다. OpenAI TTS (gpt-4o-mini-tts)를 사용하여
+                    한국어 음성을 생성합니다. 환영 메시지나 알림 음성 생성에 사용됩니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="tts-text">💬 음성으로 변환할 텍스트:</label>
+                    <textarea 
+                        id="tts-text" 
+                        placeholder="안녕하세요! 만나서 반갑습니다."
+                        style="min-height: 80px;"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="tts-voice">🎤 음성 선택:</label>
+                    <select id="tts-voice" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="alloy">Alloy (중성적)</option>
+                        <option value="echo">Echo (남성)</option>
+                        <option value="fable">Fable (영국 남성)</option>
+                        <option value="onyx">Onyx (깊은 남성)</option>
+                        <option value="nova">Nova (여성)</option>
+                        <option value="shimmer">Shimmer (밝은 여성)</option>
+                    </select>
+                </div>
+
+                <button class="btn" onclick="generateSpeech()">
+                    <span>음성 생성하기</span>
+                    <span class="loading hidden" id="tts-loading"></span>
+                </button>
+
+                <div class="response hidden" id="tts-response"></div>
+            </div>
+
+            <!-- 4. 대화 컨텍스트 추출 API 섹션 -->
+            <div class="api-section">
+                <h3>🧠 대화 컨텍스트 추출 API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/context/extract</span>
+                </div>
+                <p class="description">
+                    대화 내용을 분석하여 주요 컨텍스트를 추출합니다. 주제, 의도, 키워드, 감정, 흐름을 
+                    GPT-4o로 분석하여 간결하게 정리합니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="context-conversation">💬 대화 내용:</label>
+                    <textarea 
+                        id="context-conversation" 
+                        placeholder="사용자: 오늘 운동을 했어요&#10;AI: 좋은 습관이네요! 어떤 운동을 하셨나요?&#10;사용자: 조깅 30분 했습니다"
+                    ></textarea>
+                </div>
+
+                <button class="btn" onclick="extractContext()">
+                    <span>컨텍스트 추출하기</span>
+                    <span class="loading hidden" id="context-loading"></span>
+                </button>
+
+                <div class="response hidden" id="context-response"></div>
+            </div>
+
+            <!-- 5. API 명세서 섹션 -->
             <div class="api-section">
                 <h3>📖 API 명세서</h3>
                 
@@ -607,6 +676,145 @@ const organizeDiary = async (transcribedText) => {
                         <p><strong>에러 메시지:</strong> ${data.error}</p>
                         ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
                         <pre style="margin-top: 15px; font-size: 0.85rem;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        async function generateSpeech() {
+            const text = document.getElementById('tts-text').value.trim();
+            const voice = document.getElementById('tts-voice').value;
+            
+            if (!text) {
+                alert('텍스트를 입력해주세요.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('tts-loading');
+            const responseEl = document.getElementById('tts-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/audio/speech`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, voice })
+                });
+
+                if (response.ok && response.headers.get('content-type')?.includes('audio')) {
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                    
+                    loadingEl.classList.add('hidden');
+                    responseEl.classList.remove('hidden');
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ 음성 생성 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>🔊 생성된 음성</strong>
+                            <audio controls style="width: 100%; margin-top: 10px;">
+                                <source src="${audioUrl}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>
+                                음성: ${voice} | 
+                                텍스트 길이: ${text.length}자 | 
+                                응답 시간: ${elapsed}초
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    const data = await response.json();
+                    loadingEl.classList.add('hidden');
+                    responseEl.classList.remove('hidden');
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 오류 발생</h4>
+                        <p><strong>에러 메시지:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                    `;
+                }
+            } catch (error) {
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        async function extractContext() {
+            const conversationText = document.getElementById('context-conversation').value.trim();
+            
+            if (!conversationText) {
+                alert('대화 내용을 입력해주세요.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('context-loading');
+            const responseEl = document.getElementById('context-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/context/extract`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversationText })
+                });
+
+                const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+
+                if (data.success) {
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ 컨텍스트 추출 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>🧠 추출된 컨텍스트</strong>
+                            <p style="line-height: 1.8; white-space: pre-wrap;">${data.context}</p>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>
+                                대화 길이: ${data.conversationLength}자 | 
+                                사용 토큰: ${data.tokensUsed} | 
+                                응답 시간: ${elapsed}초
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 오류 발생</h4>
+                        <p><strong>에러 메시지:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
                     `;
                 }
             } catch (error) {
