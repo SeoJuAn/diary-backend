@@ -15,6 +15,7 @@
   "description": "",
   "dependencies": {
     "express": "^5.1.0",
+    "formidable": "^3.5.4",
     "openai": "^6.9.1"
   }
 }
