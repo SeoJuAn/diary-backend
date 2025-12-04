@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -30,7 +30,7 @@
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
         }
 
@@ -40,8 +40,18 @@
         }
 
         .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
+            font-size: 1.2rem;
+            opacity: 0.95;
+            margin-bottom: 15px;
+        }
+
+        .api-url {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            font-family: monospace;
+            font-size: 0.9rem;
         }
 
         .content {
@@ -52,46 +62,63 @@
             margin-bottom: 30px;
             border: 1px solid #e0e0e0;
             border-radius: 10px;
-            padding: 20px;
+            padding: 25px;
             background: #f8f9fa;
         }
 
         .api-section h3 {
             color: #333;
             margin-bottom: 15px;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .api-section h4 {
+            color: #555;
+            margin: 20px 0 10px 0;
+            font-size: 1.1rem;
         }
 
         .api-info {
             margin-bottom: 15px;
-            padding: 10px;
+            padding: 12px;
             background: #e9ecef;
             border-radius: 5px;
             font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .method {
             display: inline-block;
-            padding: 4px 8px;
+            padding: 6px 12px;
             border-radius: 4px;
             font-weight: bold;
-            margin-right: 10px;
+            font-size: 0.9rem;
         }
 
-        .method.get { background: #28a745; color: white; }
-        .method.post { background: #007bff; color: white; }
+        .method.post { 
+            background: #007bff; 
+            color: white; 
+        }
 
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
+            padding: 14px 28px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1.1rem;
             margin-right: 10px;
-            margin-bottom: 10px;
-            transition: transform 0.2s;
+            margin-top: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .btn:hover {
@@ -99,50 +126,136 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-small {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-small:hover {
+            background: #5a6268;
+        }
+
+        .sample-buttons {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 600;
             color: #333;
-        }
-
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
             font-size: 1rem;
         }
 
         .form-group textarea {
-            height: 80px;
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
             resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
         .response {
             margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            max-height: 300px;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            max-height: 500px;
             overflow-y: auto;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .response.success {
             background: #d4edda;
-            border: 1px solid #c3e6cb;
+            border: 2px solid #c3e6cb;
             color: #155724;
         }
 
         .response.error {
             background: #f8d7da;
-            border: 1px solid #f5c6cb;
+            border: 2px solid #f5c6cb;
             color: #721c24;
+        }
+
+        .result-section {
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 5px;
+        }
+
+        .result-section strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+
+        .result-section p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+
+        .result-section ul {
+            margin: 5px 0;
+            padding-left: 25px;
+        }
+
+        .result-section li {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        .meta-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            text-align: right;
+            opacity: 0.8;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin: 10px 0;
         }
 
         .loading {
@@ -153,7 +266,6 @@
             border-top: 3px solid #3498db;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-left: 10px;
         }
 
         @keyframes spin {
@@ -164,104 +276,197 @@
         .hidden {
             display: none;
         }
+
+        .description {
+            color: #666;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+
+        .feature-list {
+            margin: 15px 0;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .api-section {
+                padding: 20px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>📔 Diary Backend API</h1>
-            <p>일기 백엔드 API를 쉽게 테스트해보세요</p>
+            <p>음성 일기 정리 API 테스트</p>
+            <div class="api-url">https://diary-backend-beta.vercel.app</div>
         </div>
 
         <div class="content">
-            <!-- Hello API -->
+            <!-- 1. Organize Diary API 섹션 -->
             <div class="api-section">
-                <h3>🖐️ Hello API</h3>
-                <div class="api-info">
-                    <span class="method get">GET</span>
-                    <span>/api/hello</span>
-                </div>
-                <p>서버 상태와 현재 시간을 확인합니다.</p>
-                <button class="btn" onclick="testHello()">
-                    테스트하기
-                    <span class="loading hidden" id="hello-loading"></span>
-                </button>
-                <div class="response hidden" id="hello-response"></div>
-            </div>
-
-            <!-- Get Diary API -->
-            <div class="api-section">
-                <h3>📖 일기 목록 조회</h3>
-                <div class="api-info">
-                    <span class="method get">GET</span>
-                    <span>/api/diary</span>
-                </div>
-                <p>저장된 모든 일기를 조회합니다.</p>
-                <button class="btn" onclick="getDiaries()">
-                    일기 목록 조회
-                    <span class="loading hidden" id="get-diary-loading"></span>
-                </button>
-                <div class="response hidden" id="get-diary-response"></div>
-            </div>
-
-            <!-- Post Diary API -->
-            <div class="api-section">
-                <h3>✍️ 새 일기 작성</h3>
+                <h3>✨ 일기 정리 API</h3>
                 <div class="api-info">
                     <span class="method post">POST</span>
-                    <span>/api/diary</span>
+                    <span>/api/organize-diary</span>
                 </div>
-                <p>새로운 일기를 작성합니다.</p>
+                <p class="description">
+                    음성 전사 텍스트를 받아서 구조화된 일기로 자동 변환합니다.
+                    OpenAI GPT-4o를 사용하여 하루의 일상, 목표, 감사한 일, 감정 등을 분석하고 정리합니다.
+                </p>
                 
                 <div class="form-group">
-                    <label for="diary-title">일기 제목:</label>
-                    <input type="text" id="diary-title" placeholder="예: 오늘의 일기">
-                </div>
-                
-                <div class="form-group">
-                    <label for="diary-content">일기 내용:</label>
-                    <textarea id="diary-content" placeholder="오늘 있었던 일을 적어보세요..."></textarea>
+                    <label for="diary-text">💬 음성 전사 텍스트 입력:</label>
+                    <textarea 
+                        id="diary-text" 
+                        placeholder="오늘 있었던 일들을 자유롭게 입력해주세요...&#10;&#10;예: 오늘은 아침 일찍 일어나서 30분 조깅을 했어요. 날씨가 너무 좋아서 기분이 상쾌했습니다..."
+                    ></textarea>
                 </div>
 
-                <button class="btn" onclick="createDiary()">
-                    일기 작성하기
-                    <span class="loading hidden" id="post-diary-loading"></span>
+                <div class="sample-buttons">
+                    <strong style="display: block; margin-bottom: 10px; color: #555;">샘플 데이터:</strong>
+                    <button class="btn-small" onclick="loadSample(1)">📝 샘플 1: 일상 이야기</button>
+                    <button class="btn-small" onclick="loadSample(2)">💪 샘플 2: 운동 일기</button>
+                    <button class="btn-small" onclick="loadSample(3)">😊 샘플 3: 짧은 일기</button>
+                    <button class="btn-small" onclick="clearText()">🗑️ 지우기</button>
+                </div>
+
+                <button class="btn" onclick="organizeDiary()">
+                    <span>일기 정리하기</span>
+                    <span class="loading hidden" id="organize-loading"></span>
                 </button>
-                <div class="response hidden" id="post-diary-response"></div>
+
+                <div class="response hidden" id="organize-response"></div>
             </div>
 
-            <!-- AI Conversation Analysis API -->
+            <!-- 2. API 명세서 섹션 -->
             <div class="api-section">
-                <h3>🤖 AI 대화 분석</h3>
-                <div class="api-info">
-                    <span class="method post">POST</span>
-                    <span>/api/analyze-conversation</span>
-                </div>
-                <p>사용자와 AI의 대화를 분석하여 일기 인사이트를 추출합니다.</p>
+                <h3>📖 API 명세서</h3>
                 
-                <div class="form-group">
-                    <label for="ai-model">AI 모델 선택:</label>
-                    <select id="ai-model" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                        <option value="claude">Claude Sonnet 4.0</option>
-                        <option value="oss">GPT-OSS 120B</option>
-                    </select>
-                </div>
+                <h4>🔹 Request</h4>
+                <pre class="code-block">{
+  "text": "음성 전사된 텍스트"
+}</pre>
 
-                <div class="form-group">
-                    <label for="conversation-input">대화 내용 (JSON 형식):</label>
-                    <textarea id="conversation-input" placeholder='[
-  {"role": "user", "content": "오늘 아침에 커피를 마시면서 새로운 책을 읽기 시작했어."},
-  {"role": "assistant", "content": "새로운 책을 시작하는 것은 좋은 습관이네요! 어떤 종류의 책인가요?"},
-  {"role": "user", "content": "자기계발서야. 목표 설정에 관한 내용이고, 올해 운동을 더 열심히 하려고 해."},
-  {"role": "assistant", "content": "운동 목표를 세우신 것 멋지네요! 구체적인 계획이 있으신가요?"}
-]' style="height: 150px;"></textarea>
-                </div>
+                <h4>🔹 Response (성공 - 200 OK)</h4>
+                <pre class="code-block">{
+  "success": true,
+  "summary": {
+    "oneLiner": "하루를 한 문장으로 요약",
+    "dailyHighlights": ["활동1", "활동2", "활동3"],
+    "goalTracking": ["목표1", "목표2"],
+    "gratitude": ["감사1", "감사2", "감사3"],
+    "emotions": ["감정1", "감정2", "감정3"],
+    "fullDiary": "3-5문장으로 정리된 전체 일기"
+  },
+  "originalTextLength": 150,
+  "tokensUsed": 1061
+}</pre>
 
-                <button class="btn" onclick="analyzeConversation()">
-                    대화 분석하기
-                    <span class="loading hidden" id="analyze-loading"></span>
-                </button>
-                <div class="response hidden" id="analyze-response"></div>
+                <h4>🔹 Response (에러 - 400/500)</h4>
+                <pre class="code-block">{
+  "success": false,
+  "error": "에러 메시지"
+}</pre>
+
+                <h4>🔹 주요 필드 설명</h4>
+                <ul class="feature-list">
+                    <li><strong>oneLiner</strong>: 오늘 하루를 한 문장으로 요약</li>
+                    <li><strong>dailyHighlights</strong>: 주요 일상 활동 (최대 3개, 2-4단어)</li>
+                    <li><strong>goalTracking</strong>: 목표 관련 활동/진전 (최대 3개)</li>
+                    <li><strong>gratitude</strong>: 감사한 일들 (최대 3개)</li>
+                    <li><strong>emotions</strong>: 주요 감정들 (최대 3개)</li>
+                    <li><strong>fullDiary</strong>: 자연스럽게 정리된 전체 일기 (3-5문장)</li>
+                </ul>
+            </div>
+
+            <!-- 3. cURL 예제 섹션 -->
+            <div class="api-section">
+                <h3>💻 cURL 명령어</h3>
+                <p class="description">터미널에서 직접 API를 테스트할 수 있습니다.</p>
+                <pre class="code-block" id="curl-command">curl -X POST https://diary-backend-beta.vercel.app/api/organize-diary \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "오늘은 아침 일찍 일어나서 운동을 했어요. 기분이 좋았습니다."
+  }'</pre>
+                <button class="btn-small" onclick="copyCurl()">📋 복사하기</button>
+            </div>
+
+            <!-- 4. React Native 연동 예제 -->
+            <div class="api-section">
+                <h3>📱 React Native 연동 예제</h3>
+                <p class="description">React Native 앱에서 이 API를 호출하는 방법입니다.</p>
+                <pre class="code-block">// VoiceRecordingModal.tsx
+
+const organizeDiary = async (transcribedText) => {
+  try {
+    const response = await fetch(
+      'https://diary-backend-beta.vercel.app/api/organize-diary',
+      {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ 
+          text: transcribedText 
+        }),
+      }
+    );
+
+    const data = await response.json();
+    
+    if (data.success) {
+      const summary = {
+        ...data.summary,
+        originalText: transcribedText,
+        date: new Date(),
+      };
+      
+      console.log('일기 정리 완료:', summary);
+      onDiarySummaryComplete(summary);
+    } else {
+      console.error('에러:', data.error);
+    }
+  } catch (error) {
+    console.error('API 호출 실패:', error);
+  }
+};</pre>
+            </div>
+
+            <!-- 5. 기술 스택 -->
+            <div class="api-section">
+                <h3>🛠️ 기술 스택</h3>
+                <ul class="feature-list">
+                    <li><strong>Backend Framework</strong>: Vercel Serverless Functions (Node.js 22.x)</li>
+                    <li><strong>AI Model</strong>: OpenAI GPT-4o</li>
+                    <li><strong>Response Format</strong>: JSON Schema (Structured Output)</li>
+                    <li><strong>Deployment</strong>: Vercel (자동 배포)</li>
+                    <li><strong>CORS</strong>: 모든 origin 허용 (React Native 호환)</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -269,158 +474,149 @@
     <script>
         const API_BASE_URL = window.location.origin;
 
-        async function makeRequest(url, options = {}) {
+        // 샘플 데이터
+        const samples = {
+            1: "오늘은 아침 일찍 일어나서 30분 조깅을 했어요. 날씨가 너무 좋아서 기분이 상쾌했습니다. 점심에는 팀 회의가 있었는데 새로운 프로젝트 아이디어를 발표했어요. 동료들이 긍정적으로 반응해줘서 뿌듯했습니다. 저녁에는 친구와 맛있는 저녁을 먹으면서 오랜만에 수다를 떨었어요. 정말 알찬 하루였습니다.",
+            
+            2: "오늘 드디어 운동을 시작했다! 헬스장에 등록하고 PT 첫 수업을 받았는데 생각보다 힘들었다. 하지만 트레이너님이 친절하게 가르쳐주셔서 좋았다. 스쿼트랑 벤치프레스를 배웠는데 자세가 정말 중요하다는 걸 알았다. 집에 와서 단백질 쉐이크도 만들어 마셨다. 3개월 후 목표 체중을 달성하고 싶다. 내일도 꼭 가야지!",
+            
+            3: "오늘 기분 좋았어요! 날씨도 좋고 점심도 맛있었어요."
+        };
+
+        function loadSample(num) {
+            document.getElementById('diary-text').value = samples[num];
+        }
+
+        function clearText() {
+            document.getElementById('diary-text').value = '';
+        }
+
+        async function organizeDiary() {
+            const text = document.getElementById('diary-text').value.trim();
+            
+            if (!text) {
+                alert('텍스트를 입력해주세요.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('organize-loading');
+            const responseEl = document.getElementById('organize-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
+
             try {
-                const response = await fetch(url, {
-                    ...options,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
-                    }
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/organize-diary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
                 });
 
                 const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
                 
-                return {
-                    success: response.ok,
-                    status: response.status,
-                    data: data
-                };
-            } catch (error) {
-                return {
-                    success: false,
-                    error: error.message
-                };
-            }
-        }
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
 
-        function showResponse(elementId, result, loadingId) {
-            const responseEl = document.getElementById(elementId);
-            const loadingEl = document.getElementById(loadingId);
-            
-            loadingEl.classList.add('hidden');
-            responseEl.classList.remove('hidden');
-            
-            if (result.success) {
-                responseEl.className = 'response success';
-                responseEl.textContent = JSON.stringify(result.data, null, 2);
-            } else {
-                responseEl.className = 'response error';
-                responseEl.textContent = result.error || `Error ${result.status}: ${JSON.stringify(result.data, null, 2)}`;
-            }
-        }
-
-        async function testHello() {
-            const loadingEl = document.getElementById('hello-loading');
-            loadingEl.classList.remove('hidden');
-            
-            const result = await makeRequest(`${API_BASE_URL}/api/hello`);
-            showResponse('hello-response', result, 'hello-loading');
-        }
-
-        async function getDiaries() {
-            const loadingEl = document.getElementById('get-diary-loading');
-            loadingEl.classList.remove('hidden');
-            
-            const result = await makeRequest(`${API_BASE_URL}/api/diary`);
-            showResponse('get-diary-response', result, 'get-diary-loading');
-        }
-
-        async function createDiary() {
-            const title = document.getElementById('diary-title').value;
-            const content = document.getElementById('diary-content').value;
-            
-            if (!title || !content) {
-                alert('제목과 내용을 모두 입력해주세요.');
-                return;
-            }
-
-            const loadingEl = document.getElementById('post-diary-loading');
-            loadingEl.classList.remove('hidden');
-            
-            const result = await makeRequest(`${API_BASE_URL}/api/diary`, {
-                method: 'POST',
-                body: JSON.stringify({ title, content })
-            });
-            
-            showResponse('post-diary-response', result, 'post-diary-loading');
-            
-            // 성공시 폼 초기화
-            if (result.success) {
-                document.getElementById('diary-title').value = '';
-                document.getElementById('diary-content').value = '';
-            }
-        }
-
-        async function analyzeConversation() {
-            const conversationInput = document.getElementById('conversation-input').value;
-            const model = document.getElementById('ai-model').value;
-            
-            if (!conversationInput.trim()) {
-                alert('대화 내용을 입력해주세요.');
-                return;
-            }
-
-            let conversation;
-            try {
-                conversation = JSON.parse(conversationInput);
-                if (!Array.isArray(conversation)) {
-                    throw new Error('대화는 배열 형태여야 합니다.');
+                if (data.success) {
+                    // 성공 시 구조화된 응답 표시
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ 일기 정리 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>💬 오늘의 한줄</strong>
+                            <p>${data.summary.oneLiner}</p>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>📌 주요 일상</strong>
+                            <ul>${data.summary.dailyHighlights.length > 0 
+                                ? data.summary.dailyHighlights.map(h => `<li>${h}</li>`).join('') 
+                                : '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>🎯 목표 추적</strong>
+                            <ul>${data.summary.goalTracking.length > 0 
+                                ? data.summary.goalTracking.map(g => `<li>${g}</li>`).join('') 
+                                : '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>🙏 감사한 일</strong>
+                            <ul>${data.summary.gratitude.length > 0 
+                                ? data.summary.gratitude.map(g => `<li>${g}</li>`).join('') 
+                                : '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>😊 주요 감정</strong>
+                            <ul>${data.summary.emotions.length > 0 
+                                ? data.summary.emotions.map(e => `<li>${e}</li>`).join('') 
+                                : '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>📖 전체 일기</strong>
+                            <p>${data.summary.fullDiary}</p>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>
+                                원본 길이: ${data.originalTextLength}자 | 
+                                사용 토큰: ${data.tokensUsed} | 
+                                응답 시간: ${elapsed}초
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    // 에러 시
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 오류 발생</h4>
+                        <p><strong>에러 메시지:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                        <pre style="margin-top: 15px; font-size: 0.85rem;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
                 }
             } catch (error) {
-                alert('올바른 JSON 형식이 아닙니다: ' + error.message);
-                return;
-            }
-
-            const loadingEl = document.getElementById('analyze-loading');
-            loadingEl.classList.remove('hidden');
-            
-            const result = await makeRequest(`${API_BASE_URL}/api/analyze-conversation`, {
-                method: 'POST',
-                body: JSON.stringify({ conversation, model })
-            });
-            
-            showResponse('analyze-response', result, 'analyze-loading');
-            
-            // 성공시 예쁘게 표시
-            if (result.success) {
-                const responseEl = document.getElementById('analyze-response');
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
                 responseEl.innerHTML = `
-                    <h4>📊 분석 결과 (모델: ${result.model})</h4>
-                    <div style="margin: 10px 0;">
-                        <strong>🎯 오늘의 한줄:</strong><br>
-                        ${result.analysis.todayOneLine}
-                    </div>
-                    <div style="margin: 10px 0;">
-                        <strong>📝 주요 일상:</strong><br>
-                        ${result.analysis.mainActivities.map(activity => `• ${activity}`).join('<br>')}
-                    </div>
-                    <div style="margin: 10px 0;">
-                        <strong>🎯 목표 추적:</strong><br>
-                        ${result.analysis.goalTracking.mentioned ? 
-                            `목표: ${result.analysis.goalTracking.goals.join(', ')}<br>진행상황: ${result.analysis.goalTracking.progress}` : 
-                            '언급된 목표 없음'}
-                    </div>
-                    <div style="margin: 10px 0;">
-                        <strong>🙏 감사한 일들:</strong><br>
-                        ${result.analysis.gratefulFor.map(item => `• ${item}`).join('<br>')}
-                    </div>
-                    <div style="margin: 10px 0;">
-                        <strong>😊 주요 기분:</strong><br>
-                        ${result.analysis.mainMood.emotion} (${result.analysis.mainMood.intensity})<br>
-                        이유: ${result.analysis.mainMood.reason}
-                    </div>
-                    <div style="margin: 10px 0;">
-                        <strong>💡 인사이트:</strong><br>
-                        ${result.analysis.insights}
-                    </div>
-                    <details style="margin-top: 15px;">
-                        <summary>JSON 원본 보기</summary>
-                        <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px; white-space: pre-wrap;">${JSON.stringify(result, null, 2)}</pre>
-                    </details>
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
                 `;
             }
         }
+
+        function copyCurl() {
+            const curlCommand = document.getElementById('curl-command').textContent;
+            
+            navigator.clipboard.writeText(curlCommand).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ 복사됨!';
+                btn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('복사 실패: ' + err.message);
+            });
+        }
+
+        // Enter 키로 전송
+        document.getElementById('diary-text').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                organizeDiary();
+            }
+        });
     </script>
 </body>
 </html>
