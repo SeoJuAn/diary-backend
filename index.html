@@ -363,7 +363,35 @@
                 <div class="response hidden" id="organize-response"></div>
             </div>
 
-            <!-- 2. API 명세서 섹션 -->
+            <!-- 2. 음성 전사 (STT) API 섹션 -->
+            <div class="api-section">
+                <h3>🎙️ 음성 전사 (STT) API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/audio/transcribe</span>
+                </div>
+                <p class="description">
+                    오디오 파일을 텍스트로 변환합니다. OpenAI Whisper (gpt-4o-transcribe)를 사용하여
+                    한국어 음성을 정확하게 전사합니다. 일기 작성을 위한 음성 녹음 파일 처리에 최적화되어 있습니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="audio-file">🎵 오디오 파일 선택:</label>
+                    <input type="file" id="audio-file" accept="audio/*" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;">
+                    <small style="display: block; margin-top: 8px; color: #666;">
+                        지원 형식: mp4, mp3, wav, m4a, webm (최대 10MB)
+                    </small>
+                </div>
+
+                <button class="btn" onclick="transcribeAudio()">
+                    <span>음성 전사하기</span>
+                    <span class="loading hidden" id="transcribe-loading"></span>
+                </button>
+
+                <div class="response hidden" id="transcribe-response"></div>
+            </div>
+
+            <!-- 3. API 명세서 섹션 -->
             <div class="api-section">
                 <h3>📖 API 명세서</h3>
                 
@@ -573,6 +601,82 @@ const organizeDiary = async (transcribedText) => {
                     `;
                 } else {
                     // 에러 시
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 오류 발생</h4>
+                        <p><strong>에러 메시지:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                        <pre style="margin-top: 15px; font-size: 0.85rem;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        async function transcribeAudio() {
+            const fileInput = document.getElementById('audio-file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('오디오 파일을 선택해주세요.');
+                return;
+            }
+
+            // 파일 크기 체크 (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('파일 크기가 10MB를 초과합니다.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('transcribe-loading');
+            const responseEl = document.getElementById('transcribe-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('audio', file);
+
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/audio/transcribe`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+
+                if (data.success) {
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ 음성 전사 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>📝 전사된 텍스트</strong>
+                            <p style="line-height: 1.8; white-space: pre-wrap;">${data.text}</p>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>
+                                파일: ${file.name} (${(file.size / 1024).toFixed(1)} KB) | 
+                                언어: ${data.language || '한국어'} | 
+                                응답 시간: ${elapsed}초
+                            </small>
+                        </div>
+                    `;
+                } else {
                     responseEl.className = 'response error';
                     responseEl.innerHTML = `
                         <h4>❌ 오류 발생</h4>
