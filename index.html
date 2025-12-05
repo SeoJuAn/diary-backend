@@ -852,7 +852,7 @@ const organizeDiary = async (transcribedText) => {
 
             try {
                 const formData = new FormData();
-                formData.append('audio', file);
+                formData.append('file', file);
 
                 const startTime = Date.now();
                 const response = await fetch(`${API_BASE_URL}/api/audio/transcribe`, {
