@@ -65,9 +65,7 @@ Ephemeral Token을 발급받습니다.
   "sessionConfig": {
     "model": "gpt-4o-realtime-preview-2024-12-17",
     "voice": "alloy",
-    "instructions": "당신은 친근한 일기 작성 도우미입니다.",
-    "temperature": 0.8,              // Optional
-    "maxOutputTokens": 4096          // Optional
+    "instructions": "당신은 친근한 일기 작성 도우미입니다."
   }
 }
 ```
@@ -170,8 +168,6 @@ const requestEphemeralToken = async (
     model: string;
     voice: string;
     instructions: string;
-    temperature?: number;
-    maxOutputTokens?: number;
   }
 ): Promise<TokenResponse> => {
   try {
@@ -261,8 +257,6 @@ const startSession = async () => {
         model: selectedModel,
         voice: selectedVoice,
         instructions: getFinalPrompt(),
-        temperature: 0.8,
-        maxOutputTokens: 4096,
       }
     );
 
