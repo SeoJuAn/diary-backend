@@ -103,9 +103,6 @@ export default async function handler(req, res) {
                 voice: sessionConfig.voice || 'alloy',
               },
             },
-            // Optional 파라미터들
-            ...(sessionConfig.temperature && { temperature: sessionConfig.temperature }),
-            ...(sessionConfig.maxOutputTokens && { max_output_tokens: sessionConfig.maxOutputTokens }),
           },
         }),
       }
