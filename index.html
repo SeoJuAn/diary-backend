@@ -460,7 +460,59 @@
                 <div class="response hidden" id="context-response"></div>
             </div>
 
-            <!-- 5. API 명세서 섹션 -->
+            <!-- 5. Realtime Token 발급 API 섹션 -->
+            <div class="api-section">
+                <h3>🎙️ Realtime Token 발급 API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/realtime/token</span>
+                </div>
+                <p class="description">
+                    React Native 앱에서 사용할 Ephemeral Token을 발급합니다. 
+                    이 토큰은 30분간 유효하며 클라이언트에서 OpenAI Realtime API에 직접 연결할 때 사용됩니다.
+                    <strong>보안:</strong> API 키를 앱에 노출하지 않고 안전하게 실시간 음성 대화를 구현할 수 있습니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="realtime-model">🤖 모델 선택:</label>
+                    <select id="realtime-model" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="gpt-4o-realtime-preview-2024-12-17">GPT-4o Realtime (2024-12-17) - 권장</option>
+                        <option value="gpt-4o-mini-realtime-preview">GPT-4o Mini Realtime</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="realtime-voice">🎤 음성 선택:</label>
+                    <select id="realtime-voice" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="alloy">Alloy (중성적)</option>
+                        <option value="echo">Echo (남성)</option>
+                        <option value="shimmer">Shimmer (밝은 여성)</option>
+                        <option value="ash">Ash</option>
+                        <option value="ballad">Ballad</option>
+                        <option value="coral">Coral</option>
+                        <option value="sage">Sage</option>
+                        <option value="verse">Verse</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="realtime-instructions">📝 시스템 지시사항:</label>
+                    <textarea 
+                        id="realtime-instructions" 
+                        placeholder="당신은 친근한 일기 작성 도우미입니다..."
+                        style="min-height: 100px;"
+                    >당신은 친근하고 따뜻한 일기 작성 도우미입니다. 사용자의 하루 이야기를 경청하고 공감하며 대화를 이어가세요. 자연스럽게 질문하고 사용자가 더 많은 이야기를 할 수 있도록 격려해주세요.</textarea>
+                </div>
+
+                <button class="btn" onclick="createRealtimeToken()">
+                    <span>🔐 토큰 발급하기</span>
+                    <span class="loading hidden" id="realtime-token-loading"></span>
+                </button>
+
+                <div class="response hidden" id="realtime-token-response"></div>
+            </div>
+
+            <!-- 6. API 명세서 섹션 -->
             <div class="api-section">
                 <h3>📖 API 명세서</h3>
                 
@@ -903,6 +955,147 @@ const organizeDiary = async (transcribedText) => {
                     <p><strong>에러:</strong> ${error.message}</p>
                 `;
             }
+        }
+
+        async function createRealtimeToken() {
+            const model = document.getElementById('realtime-model').value;
+            const voice = document.getElementById('realtime-voice').value;
+            const instructions = document.getElementById('realtime-instructions').value.trim();
+            
+            if (!instructions) {
+                alert('시스템 지시사항을 입력해주세요.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('realtime-token-loading');
+            const responseEl = document.getElementById('realtime-token-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/realtime/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: 'test_user_web_ui',
+                        sessionConfig: {
+                            model,
+                            voice,
+                            instructions,
+                            temperature: 0.8,
+                            maxOutputTokens: 4096,
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+
+                if (data.success) {
+                    const expiresIn = Math.floor((data.expiresAt - Date.now() / 1000) / 60);
+                    const expiresAtDate = new Date(data.expiresAt * 1000);
+                    
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ Ephemeral Token 발급 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>🔑 Token (클라이언트에서 사용)</strong>
+                            <p style="word-break: break-all; font-family: 'Courier New', monospace; background: rgba(0,0,0,0.05); padding: 12px; border-radius: 5px; border: 1px solid #ddd;">
+                                ${data.token}
+                            </p>
+                            <button class="btn-small" onclick="copyToClipboard('${data.token}', this)">
+                                📋 토큰 복사
+                            </button>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>🆔 세션 ID</strong>
+                            <p style="font-family: monospace;">${data.sessionId}</p>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>⏰ 만료 시간</strong>
+                            <p>📅 ${expiresAtDate.toLocaleString('ko-KR')}</p>
+                            <p style="color: ${expiresIn < 5 ? '#d32f2f' : '#1976d2'}; font-weight: bold;">
+                                ⏱️ 약 ${expiresIn}분 후 만료
+                            </p>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>⚙️ 세션 설정</strong>
+                            <p><strong>모델:</strong> ${data.config.model}</p>
+                            <p><strong>음성:</strong> ${data.config.voice}</p>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>응답 시간: ${elapsed}초</small>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                            <strong>💡 React Native 앱 사용 방법:</strong>
+                            <pre style="background: #fff; padding: 12px; border-radius: 5px; font-size: 0.85rem; margin-top: 10px; overflow-x: auto;">// WebRTC 연결 시 이 토큰 사용
+const sdpResponse = await fetch(
+  'https://api.openai.com/v1/realtime/calls',
+  {
+    method: 'POST',
+    body: offer.sdp,
+    headers: {
+      Authorization: 'Bearer ${data.token}',
+      'Content-Type': 'application/sdp',
+    },
+  }
+);</pre>
+                        </div>
+                        
+                        <div style="margin-top: 15px; padding: 15px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">
+                            <strong>⚠️ 주의사항:</strong>
+                            <ul style="margin: 10px 0; padding-left: 20px; line-height: 1.6;">
+                                <li>이 토큰은 30분 후 자동으로 만료됩니다</li>
+                                <li>토큰으로 시작한 세션은 만료 후에도 계속 유지됩니다</li>
+                                <li>새로운 세션을 시작하려면 새 토큰을 발급받아야 합니다</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 토큰 발급 실패</h4>
+                        <p><strong>에러:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                        <pre style="margin-top: 15px; font-size: 0.85rem; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        function copyToClipboard(text, buttonElement) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = buttonElement.textContent;
+                buttonElement.textContent = '✅ 복사됨!';
+                buttonElement.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    buttonElement.textContent = originalText;
+                    buttonElement.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('복사 실패: ' + err.message);
+            });
         }
 
         function copyCurl() {
