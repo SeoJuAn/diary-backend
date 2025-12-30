@@ -1,8 +1,48 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// LLM 프로바이더 설정
+const LLM_PROVIDERS = {
+  openai: {
+    baseURL: 'https://api.openai.com/v1',
+    model: 'gpt-4o',
+  },
+  onpremise: {
+    baseURL: process.env.ONPREMISE_LLM_URL || 'https://api.kpmgpoc-samsungfire.com/v1',
+    model: process.env.ONPREMISE_LLM_MODEL || 'LFM2-2.6B-Exp-Q8_0.gguf',
+  },
+};
+
+// OpenAI 클라이언트 생성 (OpenAI 전용)
+function createOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
+
+// 온프레미스 LLM 호출 함수 (직접 fetch 사용)
+async function callOnpremiseLLM(messages, options = {}) {
+  const config = LLM_PROVIDERS.onpremise;
+  const response = await fetch(`${config.baseURL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages,
+      temperature: options.temperature || 0.7,
+      max_tokens: options.max_tokens || 500,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`온프레미스 LLM 호출 실패: ${response.status} - ${errorText}`);
+  }
+
+  return response.json();
+}
 
 const DEFAULT_PROMPT = `다음 대화 내용을 분석하여 주요 컨텍스트를 추출해주세요:
 1. 대화의 주요 주제
@@ -33,13 +73,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { conversationText, customPrompt } = req.body;
+    const { conversationText, customPrompt, llmProvider = 'openai' } = req.body;
 
     // 입력 유효성 검사
     if (!conversationText || typeof conversationText !== 'string') {
       return res.status(400).json({
         success: false,
         error: 'conversationText 필드가 필요합니다.',
+        example: {
+          conversationText: '사용자: 안녕?\nAI: 안녕하세요!',
+          llmProvider: 'openai | onpremise (선택, 기본값: openai)'
+        }
       });
     }
 
@@ -50,22 +94,49 @@ export default async function handler(req, res) {
       });
     }
 
+    // LLM 프로바이더 유효성 검사
+    if (!LLM_PROVIDERS[llmProvider]) {
+      return res.status(400).json({
+        success: false,
+        error: `지원하지 않는 llmProvider: ${llmProvider}`,
+        availableProviders: Object.keys(LLM_PROVIDERS),
+      });
+    }
+
+    // OpenAI 선택 시 API 키 확인
+    if (llmProvider === 'openai' && !process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        error: 'OPENAI_API_KEY 환경변수가 설정되지 않았습니다',
+      });
+    }
+
+    const model = LLM_PROVIDERS[llmProvider].model;
+
     // 프롬프트 구성
     const prompt = customPrompt || DEFAULT_PROMPT;
     const fullPrompt = `${prompt}\n\n대화 내용:\n${conversationText}`;
 
-    // OpenAI API 호출
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'user',
-          content: fullPrompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    });
+    console.log(`Extracting context [${llmProvider}/${model}] for conversation length:`, conversationText.length);
+
+    let completion;
+
+    if (llmProvider === 'openai') {
+      // OpenAI SDK 사용
+      const openai = createOpenAIClient();
+      completion = await openai.chat.completions.create({
+        model,
+        messages: [{ role: 'user', content: fullPrompt }],
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+    } else {
+      // 온프레미스: 직접 fetch 호출
+      completion = await callOnpremiseLLM(
+        [{ role: 'user', content: fullPrompt }],
+        { temperature: 0.7, max_tokens: 500 }
+      );
+    }
 
     const extractedContext = completion.choices[0].message.content;
 
@@ -74,6 +145,8 @@ export default async function handler(req, res) {
       context: extractedContext,
       conversationLength: conversationText.length,
       tokensUsed: completion.usage?.total_tokens || 0,
+      llmProvider,
+      model,
     });
 
   } catch (error) {

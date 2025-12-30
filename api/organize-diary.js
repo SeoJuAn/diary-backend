@@ -1,9 +1,50 @@
 import OpenAI from 'openai';
 
-// OpenAI 클라이언트 초기화
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// LLM 프로바이더 설정
+const LLM_PROVIDERS = {
+  openai: {
+    baseURL: 'https://api.openai.com/v1',
+    model: 'gpt-4o',
+    getApiKey: () => process.env.OPENAI_API_KEY,
+  },
+  onpremise: {
+    baseURL: process.env.ONPREMISE_LLM_URL || 'https://api.kpmgpoc-samsungfire.com/v1',
+    model: process.env.ONPREMISE_LLM_MODEL || 'LFM2-2.6B-Exp-Q8_0.gguf',
+    getApiKey: () => null,
+  },
+};
+
+// OpenAI 클라이언트 생성 (OpenAI 전용)
+function createOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
+
+// 온프레미스 LLM 호출 함수 (직접 fetch 사용)
+async function callOnpremiseLLM(messages, options = {}) {
+  const config = LLM_PROVIDERS.onpremise;
+  const response = await fetch(`${config.baseURL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages,
+      temperature: options.temperature || 0.7,
+      max_tokens: options.max_tokens || 1000,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`온프레미스 LLM 호출 실패: ${response.status} - ${errorText}`);
+  }
+
+  return response.json();
+}
 
 // System Prompt (백엔드에 고정)
 const SYSTEM_PROMPT = `당신은 친근하고 따뜻한 일기 작성 도우미입니다. 
@@ -87,20 +128,30 @@ export default async function handler(req, res) {
 
   try {
     // Request body 검증
-    const { text } = req.body;
+    const { text, llmProvider = 'openai' } = req.body;
 
     if (!text || typeof text !== 'string' || text.trim() === '') {
       return res.status(400).json({
         success: false,
         error: 'text 필드가 필요합니다 (음성 전사된 텍스트)',
         example: {
-          text: '오늘은 아침 일찍 일어나서 운동을 했어요...'
+          text: '오늘은 아침 일찍 일어나서 운동을 했어요...',
+          llmProvider: 'openai | onpremise (선택, 기본값: openai)'
         }
       });
     }
 
-    // OpenAI API 키 확인
-    if (!process.env.OPENAI_API_KEY) {
+    // LLM 프로바이더 유효성 검사
+    if (!LLM_PROVIDERS[llmProvider]) {
+      return res.status(400).json({
+        success: false,
+        error: `지원하지 않는 llmProvider: ${llmProvider}`,
+        availableProviders: Object.keys(LLM_PROVIDERS),
+      });
+    }
+
+    // OpenAI 선택 시 API 키 확인
+    if (llmProvider === 'openai' && !process.env.OPENAI_API_KEY) {
       console.error('OPENAI_API_KEY 환경변수가 설정되지 않았습니다');
       return res.status(500).json({
         success: false,
@@ -108,32 +159,39 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('Organizing diary for text length:', text.length);
+    const model = LLM_PROVIDERS[llmProvider].model;
+    console.log(`Organizing diary [${llmProvider}/${model}] for text length:`, text.length);
 
-    // OpenAI API 호출
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: SYSTEM_PROMPT,
+    let completion;
+
+    if (llmProvider === 'openai') {
+      // OpenAI SDK 사용
+      const openai = createOpenAIClient();
+      completion = await openai.chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: `다음 내용을 일기로 정리해주세요:\n\n"${text}"` },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'diary_summary',
+            strict: true,
+            schema: JSON_SCHEMA,
+          },
         },
-        {
-          role: 'user',
-          content: `다음 내용을 일기로 정리해주세요:\n\n"${text}"`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 1000,
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'diary_summary',
-          strict: true,
-          schema: JSON_SCHEMA,
-        },
-      },
-    });
+      });
+    } else {
+      // 온프레미스: 직접 fetch 호출
+      const systemPrompt = SYSTEM_PROMPT + `\n\n반드시 다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이 JSON만):\n${JSON.stringify(JSON_SCHEMA.properties, null, 2)}`;
+      completion = await callOnpremiseLLM([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `다음 내용을 일기로 정리해주세요:\n\n"${text}"` },
+      ], { temperature: 0.7, max_tokens: 1000 });
+    }
 
     // 응답 파싱
     const content = completion.choices[0].message.content;
@@ -148,6 +206,8 @@ export default async function handler(req, res) {
       summary: summary,
       originalTextLength: text.length,
       tokensUsed: completion.usage?.total_tokens || 0,
+      llmProvider,
+      model,
     });
 
   } catch (error) {
