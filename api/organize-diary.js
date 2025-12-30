@@ -194,8 +194,15 @@ export default async function handler(req, res) {
     }
 
     // 응답 파싱
-    const content = completion.choices[0].message.content;
+    let content = completion.choices[0].message.content;
     console.log('Generated diary summary:', content);
+
+    // 온프레미스 LLM이 ```json 코드블록으로 감싸는 경우 처리
+    if (content.includes('```json')) {
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    } else if (content.includes('```')) {
+      content = content.replace(/```\s*/g, '').trim();
+    }
 
     // JSON 파싱
     const summary = JSON.parse(content);
