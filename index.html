@@ -347,6 +347,14 @@
                     ></textarea>
                 </div>
 
+                <div class="form-group">
+                    <label for="diary-llm-provider">🤖 LLM 프로바이더 선택:</label>
+                    <select id="diary-llm-provider" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="openai">OpenAI (gpt-4o)</option>
+                        <option value="onpremise">온프레미스 (LFM2-2.6B)</option>
+                    </select>
+                </div>
+
                 <div class="sample-buttons">
                     <strong style="display: block; margin-bottom: 10px; color: #555;">샘플 데이터:</strong>
                     <button class="btn-small" onclick="loadSample(1)">📝 샘플 1: 일상 이야기</button>
@@ -450,6 +458,14 @@
                         id="context-conversation" 
                         placeholder="사용자: 오늘 운동을 했어요&#10;AI: 좋은 습관이네요! 어떤 운동을 하셨나요?&#10;사용자: 조깅 30분 했습니다"
                     ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="context-llm-provider">🤖 LLM 프로바이더 선택:</label>
+                    <select id="context-llm-provider" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="openai">OpenAI (gpt-4o)</option>
+                        <option value="onpremise">온프레미스 (LFM2-2.6B)</option>
+                    </select>
                 </div>
 
                 <button class="btn" onclick="extractContext()">
@@ -642,6 +658,7 @@ const organizeDiary = async (transcribedText) => {
 
         async function organizeDiary() {
             const text = document.getElementById('diary-text').value.trim();
+            const llmProvider = document.getElementById('diary-llm-provider').value;
             
             if (!text) {
                 alert('텍스트를 입력해주세요.');
@@ -659,7 +676,7 @@ const organizeDiary = async (transcribedText) => {
                 const response = await fetch(`${API_BASE_URL}/api/organize-diary`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text })
+                    body: JSON.stringify({ text, llmProvider })
                 });
 
                 const data = await response.json();
@@ -714,6 +731,7 @@ const organizeDiary = async (transcribedText) => {
                         
                         <div class="meta-info">
                             <small>
+                                LLM: ${data.llmProvider || 'openai'} (${data.model || 'gpt-4o'}) | 
                                 원본 길이: ${data.originalTextLength}자 | 
                                 사용 토큰: ${data.tokensUsed} | 
                                 응답 시간: ${elapsed}초
@@ -817,6 +835,7 @@ const organizeDiary = async (transcribedText) => {
 
         async function extractContext() {
             const conversationText = document.getElementById('context-conversation').value.trim();
+            const llmProvider = document.getElementById('context-llm-provider').value;
             
             if (!conversationText) {
                 alert('대화 내용을 입력해주세요.');
@@ -834,7 +853,7 @@ const organizeDiary = async (transcribedText) => {
                 const response = await fetch(`${API_BASE_URL}/api/context/extract`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ conversationText })
+                    body: JSON.stringify({ conversationText, llmProvider })
                 });
 
                 const data = await response.json();
@@ -855,6 +874,7 @@ const organizeDiary = async (transcribedText) => {
                         
                         <div class="meta-info">
                             <small>
+                                LLM: ${data.llmProvider || 'openai'} (${data.model || 'gpt-4o'}) | 
                                 대화 길이: ${data.conversationLength}자 | 
                                 사용 토큰: ${data.tokensUsed} | 
                                 응답 시간: ${elapsed}초
