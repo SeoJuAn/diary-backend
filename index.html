@@ -15,12 +15,13 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
             max-width: 900px;
-            margin: 0 auto;
+            margin: 20px auto;
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
@@ -54,45 +55,64 @@
             font-size: 0.9rem;
         }
 
-        /* 메인 탭 스타일 */
+        /* 최상단 탭 네비게이션 */
+        .top-nav {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0;
+            margin: 0;
+        }
+
         .main-tabs {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
+            gap: 0;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .main-tab {
-            background: rgba(255,255,255,0.3);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
-            border: 2px solid rgba(255,255,255,0.5);
+            background: transparent;
+            color: #666;
+            padding: 20px 40px;
+            border: none;
+            border-bottom: 3px solid transparent;
             cursor: pointer;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 1.1rem;
             transition: all 0.3s;
+            position: relative;
         }
 
         .main-tab:hover {
-            background: rgba(255,255,255,0.4);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: #fff;
+            color: #667eea;
         }
 
         .main-tab.active {
             background: white;
             color: #667eea;
-            border-color: white;
+            border-bottom-color: #667eea;
         }
 
         .main-tab-content {
             display: none;
+            min-height: calc(100vh - 65px);
         }
 
         .main-tab-content.active {
             display: block;
+        }
+
+        #main-tab-api-test {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 20px 40px 20px;
+        }
+
+        #main-tab-prompt-playground {
+            background: white;
+            padding: 0;
+            margin: 0;
         }
 
         .content {
@@ -360,25 +380,26 @@
     </style>
 </head>
 <body>
+    <!-- 최상단 탭 네비게이션 -->
+    <div class="top-nav">
+        <div class="main-tabs">
+            <button class="main-tab active" onclick="switchMainTab('api-test')">
+                🧪 API 테스트
+            </button>
+            <button class="main-tab" onclick="switchMainTab('prompt-playground')">
+                🎨 프롬프트 플레이그라운드
+            </button>
+        </div>
+    </div>
+
+    <!-- API 테스트 탭 컨텐츠 -->
+    <div id="main-tab-api-test" class="main-tab-content active">
     <div class="container">
         <div class="header">
             <h1>📔 Diary Backend API</h1>
             <p>음성 일기 정리 API 테스트</p>
             <div class="api-url">https://diary-backend-beta.vercel.app</div>
-            
-            <!-- 메인 탭 -->
-            <div class="main-tabs">
-                <button class="main-tab active" onclick="switchMainTab('api-test')">
-                    🧪 API 테스트
-                </button>
-                <button class="main-tab" onclick="switchMainTab('prompt-playground')">
-                    🎨 프롬프트 플레이그라운드
-                </button>
-            </div>
         </div>
-
-        <!-- API 테스트 탭 컨텐츠 -->
-        <div id="main-tab-api-test" class="main-tab-content active">
         <div class="content">
             <!-- 1. Organize Diary API 섹션 -->
             <div class="api-section">
@@ -687,16 +708,15 @@ const organizeDiary = async (transcribedText) => {
                 </ul>
             </div>
         </div>
-        </div>
-        <!-- API 테스트 탭 끝 -->
-
-        <!-- 프롬프트 플레이그라운드 탭 시작 -->
-        <div id="main-tab-prompt-playground" class="main-tab-content">
-            <iframe src="/prompt-playground.html" style="width: 100%; height: calc(100vh - 200px); border: none; border-radius: 0 0 15px 15px;"></iframe>
-        </div>
-        <!-- 프롬프트 플레이그라운드 탭 끝 -->
-
     </div>
+    </div>
+    <!-- API 테스트 탭 끝 -->
+
+    <!-- 프롬프트 플레이그라운드 탭 시작 -->
+    <div id="main-tab-prompt-playground" class="main-tab-content">
+        <iframe src="/prompt-playground.html" style="width: 100%; height: 100vh; border: none;"></iframe>
+    </div>
+    <!-- 프롬프트 플레이그라운드 탭 끝 -->
 
     <script>
         const API_BASE_URL = window.location.origin;
