@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프롬프트 테스트 플레이그라운드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        /* 탭 스타일 */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 30px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 섹션 스타일 */
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 버전 헤더 */
+        .version-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .version-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .version-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .version-badge.default {
+            background: #28a745;
+        }
+
+        .version-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .version-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* 폼 그룹 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Monaco', 'Courier New', monospace;
+            resize: vertical;
+            min-height: 150px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea.prompt-editor {
+            min-height: 250px;
+            background: #2d2d2d;
+            color: #f8f8f2;
+        }
+
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-right: 10px;
+            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-small {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-small:hover {
+            background: #5a6268;
+        }
+
+        .btn-small.btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-small.btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-small.btn-success {
+            background: #28a745;
+        }
+
+        .btn-small.btn-success:hover {
+            background: #218838;
+        }
+
+        /* 버전 히스토리 */
+        .version-history {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .version-history.show {
+            display: block;
+        }
+
+        .version-history h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .version-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            transition: border-color 0.2s;
+        }
+
+        .version-item:hover {
+            border-color: #667eea;
+        }
+
+        .version-item.current {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .version-item.default-version {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+
+        .version-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .version-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .version-status {
+            color: #667eea;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .version-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .version-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* 응답 영역 */
+        .response {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            max-height: 600px;
+            overflow-y: auto;
+            animation: fadeIn 0.3s;
+        }
+
+        .response.success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-section {
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 5px;
+        }
+
+        .result-section strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+
+        .result-section p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+
+        .result-section ul {
+            margin: 5px 0;
+            padding-left: 25px;
+        }
+
+        .result-section li {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        .meta-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            text-align: right;
+            opacity: 0.8;
+        }
+
+        /* 로딩 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 샘플 버튼 */
+        .sample-buttons {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* Backup 섹션 */
+        .backup-section {
+            padding: 20px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .backup-section h4 {
+            margin-bottom: 15px;
+            color: #856404;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+
+            .tabs {
+                gap: 5px;
+            }
+
+            .tab {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+
+            .version-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+
+        /* 추가: 캐릭터 카운터 */
+        .char-counter {
+            text-align: right;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 프롬프트 테스트 플레이그라운드</h1>
+            <p>LLM 프롬프트를 수정하고 실시간으로 테스트하세요</p>
+        </div>
+
+        <div class="content">
+            <!-- 백업 섹션 -->
+            <div class="backup-section">
+                <h4>💾 데이터 백업 & 공유</h4>
+                <button class="btn-small" onclick="exportAllVersions()">
+                    📥 모든 버전 다운로드 (JSON)
+                </button>
+                <button class="btn-small" onclick="document.getElementById('import-file').click()">
+                    📤 버전 불러오기
+                </button>
+                <input type="file" id="import-file" accept=".json" style="display:none" 
+                       onchange="importVersions(this.files[0])">
+                
+                <p style="font-size: 0.9rem; color: #856404; margin-top: 10px;">
+                    💡 파일로 저장하면 다른 브라우저나 동료와 공유할 수 있습니다! 정기적으로 백업하세요.
+                </p>
+                <p id="storage-usage" style="font-size: 0.9rem; color: #856404; margin-top: 5px;"></p>
+            </div>
+
+            <!-- 탭 메뉴 -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('organize-diary')">일기 정리</button>
+                <button class="tab" onclick="switchTab('context-extract')">컨텍스트 추출</button>
+                <button class="tab" onclick="switchTab('tts')">음성 합성 (TTS)</button>
+                <button class="tab" onclick="switchTab('realtime')">실시간 대화</button>
+            </div>
+
+            <!-- 탭 1: 일기 정리 -->
+            <div id="tab-organize-diary" class="tab-content active">
+                <!-- 테스트 입력 섹션 -->
+                <div class="section">
+                    <h3>💬 테스트 입력</h3>
+                    <div class="form-group">
+                        <label for="diary-input">음성 전사 텍스트 입력:</label>
+                        <textarea id="diary-input" placeholder="오늘 있었던 일들을 자유롭게 입력해주세요...&#10;&#10;예: 오늘은 아침 일찍 일어나서 30분 조깅을 했어요. 날씨가 너무 좋아서 기분이 상쾌했습니다..."></textarea>
+                        <div class="char-counter" id="diary-input-counter">0자</div>
+                    </div>
+
+                    <div class="sample-buttons">
+                        <strong style="display: block; width: 100%; margin-bottom: 10px; color: #555;">샘플 데이터:</strong>
+                        <button class="btn-small" onclick="loadSample('organize-diary', 1)">📝 샘플 1: 일상 이야기</button>
+                        <button class="btn-small" onclick="loadSample('organize-diary', 2)">💪 샘플 2: 운동 일기</button>
+                        <button class="btn-small" onclick="loadSample('organize-diary', 3)">😊 샘플 3: 짧은 일기</button>
+                        <button class="btn-small" onclick="clearInput('organize-diary')">🗑️ 지우기</button>
+                    </div>
+                </div>
+
+                <!-- 프롬프트 편집 섹션 -->
+                <div class="section">
+                    <h3>🧠 프롬프트 편집</h3>
+                    
+                    <!-- 버전 헤더 -->
+                    <div class="version-header">
+                        <div class="version-info">
+                            <span class="version-badge" id="diary-version-badge">v0</span>
+                            <span class="version-name" id="diary-version-name">Default</span>
+                            <span class="version-date" id="diary-version-date"></span>
+                        </div>
+                        <button class="btn-small btn-success" onclick="toggleVersionHistory('organize-diary')">
+                            📜 히스토리 보기
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="diary-prompt">System Prompt:</label>
+                        <textarea id="diary-prompt" class="prompt-editor" placeholder="프롬프트를 입력하세요..."></textarea>
+                        <div class="char-counter" id="diary-prompt-counter">0자</div>
+                    </div>
+
+                    <button class="btn-small" onclick="resetToDefault('organize-diary')">🔄 Default로 되돌리기</button>
+                    <button class="btn-small btn-success" onclick="saveAsNewVersion('organize-diary')">💾 새 버전으로 저장</button>
+
+                    <!-- 버전 히스토리 -->
+                    <div class="version-history" id="diary-version-history"></div>
+                </div>
+
+                <!-- 테스트 실행 버튼 -->
+                <button class="btn" onclick="testPrompt('organize-diary')" id="diary-test-btn">
+                    <span>🚀 이 프롬프트로 테스트 실행</span>
+                    <span class="loading hidden" id="diary-loading"></span>
+                </button>
+
+                <!-- 결과 섹션 -->
+                <div class="response hidden" id="diary-response"></div>
+            </div>
+
+            <!-- 탭 2: 컨텍스트 추출 (placeholder) -->
+            <div id="tab-context-extract" class="tab-content">
+                <div class="section">
+                    <h3>💬 테스트 입력</h3>
+                    <div class="form-group">
+                        <label for="context-input">대화 내용:</label>
+                        <textarea id="context-input" placeholder="사용자: 오늘 운동을 했어요&#10;AI: 좋은 습관이네요! 어떤 운동을 하셨나요?&#10;사용자: 조깅 30분 했습니다"></textarea>
+                        <div class="char-counter" id="context-input-counter">0자</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🧠 프롬프트 편집</h3>
+                    
+                    <div class="version-header">
+                        <div class="version-info">
+                            <span class="version-badge" id="context-version-badge">v0</span>
+                            <span class="version-name" id="context-version-name">Default</span>
+                            <span class="version-date" id="context-version-date"></span>
+                        </div>
+                        <button class="btn-small btn-success" onclick="toggleVersionHistory('context-extract')">
+                            📜 히스토리 보기
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="context-prompt">Custom Prompt:</label>
+                        <textarea id="context-prompt" class="prompt-editor"></textarea>
+                        <div class="char-counter" id="context-prompt-counter">0자</div>
+                    </div>
+
+                    <button class="btn-small" onclick="resetToDefault('context-extract')">🔄 Default로 되돌리기</button>
+                    <button class="btn-small btn-success" onclick="saveAsNewVersion('context-extract')">💾 새 버전으로 저장</button>
+
+                    <div class="version-history" id="context-version-history"></div>
+                </div>
+
+                <button class="btn" onclick="testPrompt('context-extract')" id="context-test-btn">
+                    <span>🚀 이 프롬프트로 테스트 실행</span>
+                    <span class="loading hidden" id="context-loading"></span>
+                </button>
+
+                <div class="response hidden" id="context-response"></div>
+            </div>
+
+            <!-- 탭 3: TTS (placeholder) -->
+            <div id="tab-tts" class="tab-content">
+                <div class="section">
+                    <h3>💬 테스트 입력</h3>
+                    <div class="form-group">
+                        <label for="tts-input">텍스트 입력:</label>
+                        <textarea id="tts-input" placeholder="안녕하세요! 만나서 반갑습니다." style="min-height: 100px;"></textarea>
+                        <div class="char-counter" id="tts-input-counter">0자</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tts-voice">음성 선택:</label>
+                        <select id="tts-voice">
+                            <option value="alloy">Alloy (중성적)</option>
+                            <option value="echo">Echo (남성)</option>
+                            <option value="fable">Fable (영국 남성)</option>
+                            <option value="onyx">Onyx (깊은 남성)</option>
+                            <option value="nova">Nova (여성)</option>
+                            <option value="shimmer">Shimmer (밝은 여성)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🧠 Instructions 편집</h3>
+                    
+                    <div class="version-header">
+                        <div class="version-info">
+                            <span class="version-badge" id="tts-version-badge">v0</span>
+                            <span class="version-name" id="tts-version-name">Default</span>
+                            <span class="version-date" id="tts-version-date"></span>
+                        </div>
+                        <button class="btn-small btn-success" onclick="toggleVersionHistory('tts')">
+                            📜 히스토리 보기
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tts-instructions">TTS Instructions:</label>
+                        <textarea id="tts-instructions" class="prompt-editor" style="min-height: 120px;"></textarea>
+                        <div class="char-counter" id="tts-instructions-counter">0자</div>
+                    </div>
+
+                    <button class="btn-small" onclick="resetToDefault('tts')">🔄 Default로 되돌리기</button>
+                    <button class="btn-small btn-success" onclick="saveAsNewVersion('tts')">💾 새 버전으로 저장</button>
+
+                    <div class="version-history" id="tts-version-history"></div>
+                </div>
+
+                <button class="btn" onclick="testPrompt('tts')" id="tts-test-btn">
+                    <span>🚀 음성 생성하기</span>
+                    <span class="loading hidden" id="tts-loading"></span>
+                </button>
+
+                <div class="response hidden" id="tts-response"></div>
+            </div>
+
+            <!-- 탭 4: Realtime (placeholder) -->
+            <div id="tab-realtime" class="tab-content">
+                <div class="section">
+                    <h3>⚙️ 세션 설정</h3>
+                    
+                    <div class="form-group">
+                        <label for="realtime-model">모델 선택:</label>
+                        <select id="realtime-model">
+                            <option value="gpt-4o-realtime-preview-2024-12-17">GPT-4o Realtime (2024-12-17) - 권장</option>
+                            <option value="gpt-4o-mini-realtime-preview">GPT-4o Mini Realtime</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="realtime-voice">음성 선택:</label>
+                        <select id="realtime-voice">
+                            <option value="alloy">Alloy (중성적)</option>
+                            <option value="echo">Echo (남성)</option>
+                            <option value="shimmer">Shimmer (밝은 여성)</option>
+                            <option value="ash">Ash</option>
+                            <option value="ballad">Ballad</option>
+                            <option value="coral">Coral</option>
+                            <option value="sage">Sage</option>
+                            <option value="verse">Verse</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🧠 System Instructions 편집</h3>
+                    
+                    <div class="version-header">
+                        <div class="version-info">
+                            <span class="version-badge" id="realtime-version-badge">v0</span>
+                            <span class="version-name" id="realtime-version-name">Default</span>
+                            <span class="version-date" id="realtime-version-date"></span>
+                        </div>
+                        <button class="btn-small btn-success" onclick="toggleVersionHistory('realtime')">
+                            📜 히스토리 보기
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="realtime-instructions">System Instructions:</label>
+                        <textarea id="realtime-instructions" class="prompt-editor"></textarea>
+                        <div class="char-counter" id="realtime-instructions-counter">0자</div>
+                    </div>
+
+                    <button class="btn-small" onclick="resetToDefault('realtime')">🔄 Default로 되돌리기</button>
+                    <button class="btn-small btn-success" onclick="saveAsNewVersion('realtime')">💾 새 버전으로 저장</button>
+
+                    <div class="version-history" id="realtime-version-history"></div>
+                </div>
+
+                <button class="btn" onclick="testPrompt('realtime')" id="realtime-test-btn">
+                    <span>🔐 토큰 발급하기</span>
+                    <span class="loading hidden" id="realtime-loading"></span>
+                </button>
+
+                <div class="response hidden" id="realtime-response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // 전역 변수 및 상수
+        // ============================================
+        const API_BASE_URL = window.location.origin;
+        const STORAGE_KEY = 'promptPlayground';
+        
+        // Default 프롬프트 (백엔드와 동일하게 유지)
+        const DEFAULT_PROMPTS = {
+            'organize-diary': `당신은 친근하고 따뜻한 일기 작성 도우미입니다. 
+사용자가 말한 내용을 바탕으로 구조화된 일기 요약을 생성해주세요.
+
+규칙:
+1. 한국어로 작성하세요
+2. 1인칭 시점을 유지하세요 (나는, 내가 등)
+3. 감정과 느낌을 풍부하게 표현하세요
+4. 각 카테고리에 해당하는 내용이 없으면 빈 배열로 반환하세요
+5. 각 항목은 간결하게 2-4단어로 표현하세요
+6. oneLiner는 오늘 하루를 대표하는 한 문장으로 작성하세요
+7. fullDiary는 전체 내용을 자연스럽게 3-5문장으로 정리하세요`,
+
+            'context-extract': `다음 대화 내용을 분석하여 주요 컨텍스트를 추출해주세요:
+1. 대화의 주요 주제
+2. 사용자의 의도나 목적
+3. 중요한 정보나 키워드
+4. 감정 상태나 톤
+5. 대화의 흐름 요약
+
+결과는 간결하게 불릿 포인트 형식으로 정리해주세요.`,
+
+            'tts': '친근하고 밝은 톤으로 말해주세요',
+
+            'realtime': '당신은 친근하고 따뜻한 일기 작성 도우미입니다. 사용자의 하루 이야기를 경청하고 공감하며 대화를 이어가세요. 자연스럽게 질문하고 사용자가 더 많은 이야기를 할 수 있도록 격려해주세요.'
+        };
+
+        // 샘플 데이터
+        const SAMPLE_DATA = {
+            'organize-diary': {
+                1: "오늘은 아침 일찍 일어나서 30분 조깅을 했어요. 날씨가 너무 좋아서 기분이 상쾌했습니다. 점심에는 팀 회의가 있었는데 새로운 프로젝트 아이디어를 발표했어요. 동료들이 긍정적으로 반응해줘서 뿌듯했습니다. 저녁에는 친구와 맛있는 저녁을 먹으면서 오랜만에 수다를 떨었어요. 정말 알찬 하루였습니다.",
+                2: "오늘 드디어 운동을 시작했다! 헬스장에 등록하고 PT 첫 수업을 받았는데 생각보다 힘들었다. 하지만 트레이너님이 친절하게 가르쳐주셔서 좋았다. 스쿼트랑 벤치프레스를 배웠는데 자세가 정말 중요하다는 걸 알았다. 집에 와서 단백질 쉐이크도 만들어 마셨다. 3개월 후 목표 체중을 달성하고 싶다. 내일도 꼭 가야지!",
+                3: "오늘 기분 좋았어요! 날씨도 좋고 점심도 맛있었어요."
+            }
+        };
+
+        // ============================================
+        // LocalStorage 관리 함수
+        // ============================================
+        
+        function initializeStorage() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (!data) {
+                const initialData = {
+                    version: "1.0",
+                    endpoints: {},
+                    metadata: {
+                        lastUpdated: Date.now(),
+                        totalVersions: 0
+                    }
+                };
+                
+                // 각 엔드포인트의 v0 (Default) 생성
+                for (const endpoint in DEFAULT_PROMPTS) {
+                    initialData.endpoints[endpoint] = {
+                        currentVersion: 'v0',
+                        versions: [{
+                            version: 'v0',
+                            name: 'Default',
+                            prompt: DEFAULT_PROMPTS[endpoint],
+                            createdAt: Date.now(),
+                            isDefault: true,
+                            deletable: false
+                        }]
+                    };
+                    initialData.metadata.totalVersions++;
+                }
+                
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+                return initialData;
+            }
+            return JSON.parse(data);
+        }
+
+        function loadFromStorage() {
+            return initializeStorage();
+        }
+
+        function saveToStorage(data) {
+            try {
+                data.metadata.lastUpdated = Date.now();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                updateStorageUsage();
+                return true;
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('⚠️ 저장 공간이 부족합니다. 오래된 버전을 삭제해주세요.');
+                    return false;
+                }
+                throw e;
+            }
+        }
+
+        function getVersions(endpoint) {
+            const data = loadFromStorage();
+            return data.endpoints[endpoint]?.versions || [];
+        }
+
+        function getCurrentVersion(endpoint) {
+            const data = loadFromStorage();
+            return data.endpoints[endpoint]?.currentVersion || 'v0';
+        }
+
+        function getCurrentVersionData(endpoint) {
+            const versions = getVersions(endpoint);
+            const currentVersion = getCurrentVersion(endpoint);
+            return versions.find(v => v.version === currentVersion);
+        }
+
+        // ============================================
+        // 버전 관리 함수
+        // ============================================
+
+        function resetToDefault(endpoint) {
+            if (!confirm('정말 Default 버전으로 되돌리시겠습니까?')) {
+                return;
+            }
+            
+            const versions = getVersions(endpoint);
+            const defaultVersion = versions.find(v => v.version === 'v0');
+            
+            if (!defaultVersion) {
+                alert('❌ Default 버전을 찾을 수 없습니다.');
+                return;
+            }
+            
+            // 프롬프트 에디터에 표시
+            displayPrompt(endpoint, defaultVersion);
+            
+            // 현재 버전을 v0로 설정
+            const data = loadFromStorage();
+            data.endpoints[endpoint].currentVersion = 'v0';
+            saveToStorage(data);
+            
+            // UI 업데이트
+            updateVersionHeader(endpoint);
+            renderVersionHistory(endpoint);
+            
+            alert('✅ Default 버전으로 되돌렸습니다!');
+        }
+
+        function saveAsNewVersion(endpoint) {
+            const currentPrompt = getPromptFromEditor(endpoint);
+            
+            if (!currentPrompt || currentPrompt.trim() === '') {
+                alert('❌ 프롬프트를 입력해주세요.');
+                return;
+            }
+            
+            const versionName = prompt('버전 이름을 입력하세요:', `수정 버전 ${new Date().toLocaleString('ko-KR')}`);
+            
+            if (!versionName) {
+                return; // 취소
+            }
+            
+            const data = loadFromStorage();
+            const versions = data.endpoints[endpoint].versions;
+            
+            // 버전 번호 자동 증가
+            const latestVersion = versions[versions.length - 1].version;
+            const newVersionNumber = parseInt(latestVersion.slice(1)) + 1;
+            const newVersion = `v${newVersionNumber}`;
+            
+            // 새 버전 생성
+            const newVersionObj = {
+                version: newVersion,
+                name: versionName,
+                prompt: currentPrompt,
+                createdAt: Date.now(),
+                isDefault: false,
+                deletable: true
+            };
+            
+            versions.push(newVersionObj);
+            data.endpoints[endpoint].currentVersion = newVersion;
+            data.metadata.totalVersions++;
+            
+            if (saveToStorage(data)) {
+                alert(`✅ ${newVersion} 버전으로 저장되었습니다!`);
+                updateVersionHeader(endpoint);
+                renderVersionHistory(endpoint);
+            }
+        }
+
+        function switchToVersion(endpoint, targetVersion) {
+            const versions = getVersions(endpoint);
+            const selectedVersion = versions.find(v => v.version === targetVersion);
+            
+            if (!selectedVersion) {
+                alert('❌ 버전을 찾을 수 없습니다.');
+                return;
+            }
+            
+            // 현재 에디터 내용이 저장 안 되어 있으면 경고
+            const currentPrompt = getPromptFromEditor(endpoint);
+            const currentVersionObj = getCurrentVersionData(endpoint);
+            
+            if (currentPrompt !== currentVersionObj.prompt) {
+                if (!confirm('현재 편집 중인 내용이 저장되지 않았습니다. 계속하시겠습니까?')) {
+                    return;
+                }
+            }
+            
+            // 선택한 버전으로 전환
+            displayPrompt(endpoint, selectedVersion);
+            
+            const data = loadFromStorage();
+            data.endpoints[endpoint].currentVersion = targetVersion;
+            saveToStorage(data);
+            
+            // UI 업데이트
+            updateVersionHeader(endpoint);
+            renderVersionHistory(endpoint);
+            
+            alert(`✅ ${targetVersion} 버전으로 전환되었습니다!`);
+        }
+
+        function deleteVersion(endpoint, versionToDelete) {
+            // v0은 삭제 불가
+            if (versionToDelete === 'v0') {
+                alert('❌ Default 버전은 삭제할 수 없습니다.');
+                return;
+            }
+            
+            if (!confirm(`정말 ${versionToDelete} 버전을 삭제하시겠습니까?`)) {
+                return;
+            }
+            
+            const data = loadFromStorage();
+            const currentVersion = data.endpoints[endpoint].currentVersion;
+            
+            // 현재 사용 중인 버전 삭제 시 경고
+            if (versionToDelete === currentVersion) {
+                alert('❌ 현재 사용 중인 버전은 삭제할 수 없습니다. 다른 버전으로 전환 후 삭제하세요.');
+                return;
+            }
+            
+            // 버전 삭제
+            data.endpoints[endpoint].versions = data.endpoints[endpoint].versions.filter(
+                v => v.version !== versionToDelete
+            );
+            data.metadata.totalVersions--;
+            
+            saveToStorage(data);
+            
+            // UI 갱신
+            renderVersionHistory(endpoint);
+            
+            alert(`✅ ${versionToDelete} 버전이 삭제되었습니다!`);
+        }
+
+        // ============================================
+        // UI 업데이트 함수
+        // ============================================
+
+        function displayPrompt(endpoint, versionData) {
+            const promptEditorId = getPromptEditorId(endpoint);
+            const editor = document.getElementById(promptEditorId);
+            if (editor) {
+                editor.value = versionData.prompt;
+                updateCharCounter(promptEditorId);
+            }
+        }
+
+        function getPromptFromEditor(endpoint) {
+            const promptEditorId = getPromptEditorId(endpoint);
+            const editor = document.getElementById(promptEditorId);
+            return editor ? editor.value : '';
+        }
+
+        function getPromptEditorId(endpoint) {
+            const mapping = {
+                'organize-diary': 'diary-prompt',
+                'context-extract': 'context-prompt',
+                'tts': 'tts-instructions',
+                'realtime': 'realtime-instructions'
+            };
+            return mapping[endpoint];
+        }
+
+        function updateVersionHeader(endpoint) {
+            const versionData = getCurrentVersionData(endpoint);
+            if (!versionData) return;
+            
+            const prefix = endpoint.replace('-', '');
+            const badge = document.getElementById(`${getShortEndpoint(endpoint)}-version-badge`);
+            const name = document.getElementById(`${getShortEndpoint(endpoint)}-version-name`);
+            const date = document.getElementById(`${getShortEndpoint(endpoint)}-version-date`);
+            
+            if (badge) {
+                badge.textContent = versionData.version;
+                badge.className = versionData.isDefault ? 'version-badge default' : 'version-badge';
+            }
+            if (name) name.textContent = versionData.name;
+            if (date && !versionData.isDefault) {
+                date.textContent = new Date(versionData.createdAt).toLocaleString('ko-KR');
+            }
+        }
+
+        function getShortEndpoint(endpoint) {
+            const mapping = {
+                'organize-diary': 'diary',
+                'context-extract': 'context',
+                'tts': 'tts',
+                'realtime': 'realtime'
+            };
+            return mapping[endpoint];
+        }
+
+        function toggleVersionHistory(endpoint) {
+            const historyId = `${getShortEndpoint(endpoint)}-version-history`;
+            const history = document.getElementById(historyId);
+            
+            if (history.classList.contains('show')) {
+                history.classList.remove('show');
+            } else {
+                renderVersionHistory(endpoint);
+                history.classList.add('show');
+            }
+        }
+
+        function renderVersionHistory(endpoint) {
+            const historyId = `${getShortEndpoint(endpoint)}-version-history`;
+            const history = document.getElementById(historyId);
+            if (!history) return;
+            
+            const versions = getVersions(endpoint);
+            const currentVersion = getCurrentVersion(endpoint);
+            
+            let html = '<h4>📜 버전 히스토리</h4>';
+            
+            // 최신 버전부터 표시 (역순)
+            for (let i = versions.length - 1; i >= 0; i--) {
+                const v = versions[i];
+                const isCurrent = v.version === currentVersion;
+                const itemClass = isCurrent ? 'version-item current' : 
+                                 (v.isDefault ? 'version-item default-version' : 'version-item');
+                
+                html += `
+                    <div class="${itemClass}">
+                        <div class="version-item-header">
+                            <div class="version-item-info">
+                                <span class="version-badge ${v.isDefault ? 'default' : ''}">${v.version}</span>
+                                <span class="version-name">${v.isDefault ? '🔒 ' : ''}${v.name}</span>
+                                ${isCurrent ? '<span class="version-status">✅ 현재 버전</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="version-meta">
+                            <small>${v.isDefault ? '시스템 기본 프롬프트' : new Date(v.createdAt).toLocaleString('ko-KR')}</small>
+                        </div>
+                        <div class="version-actions">
+                            ${isCurrent ? 
+                                '<button class="btn-small" disabled>이 버전 보기</button>' : 
+                                `<button class="btn-small" onclick="switchToVersion('${endpoint}', '${v.version}')">이 버전으로 전환</button>`
+                            }
+                            ${v.deletable ? 
+                                `<button class="btn-small btn-danger" onclick="deleteVersion('${endpoint}', '${v.version}')">삭제</button>` :
+                                '<button class="btn-small" disabled title="Default 버전은 삭제할 수 없습니다">삭제 불가</button>'
+                            }
+                        </div>
+                    </div>
+                `;
+            }
+            
+            history.innerHTML = html;
+        }
+
+        // ============================================
+        // 탭 전환
+        // ============================================
+
+        function switchTab(tabName) {
+            // 모든 탭 비활성화
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 선택한 탭 활성화
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // 해당 탭의 프롬프트 로드
+            loadPromptForTab(tabName);
+        }
+
+        function loadPromptForTab(endpoint) {
+            const versionData = getCurrentVersionData(endpoint);
+            if (versionData) {
+                displayPrompt(endpoint, versionData);
+                updateVersionHeader(endpoint);
+            }
+        }
+
+        // ============================================
+        // 샘플 데이터 및 입력 관리
+        // ============================================
+
+        function loadSample(endpoint, sampleNum) {
+            const inputId = `${getShortEndpoint(endpoint)}-input`;
+            const input = document.getElementById(inputId);
+            if (input && SAMPLE_DATA[endpoint] && SAMPLE_DATA[endpoint][sampleNum]) {
+                input.value = SAMPLE_DATA[endpoint][sampleNum];
+                updateCharCounter(inputId);
+            }
+        }
+
+        function clearInput(endpoint) {
+            const inputId = `${getShortEndpoint(endpoint)}-input`;
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.value = '';
+                updateCharCounter(inputId);
+            }
+        }
+
+        function updateCharCounter(elementId) {
+            const element = document.getElementById(elementId);
+            const counter = document.getElementById(`${elementId}-counter`);
+            if (element && counter) {
+                counter.textContent = `${element.value.length}자`;
+            }
+        }
+
+        // ============================================
+        // API 테스트 함수
+        // ============================================
+
+        async function testPrompt(endpoint) {
+            const inputId = `${getShortEndpoint(endpoint)}-input`;
+            const loadingId = `${getShortEndpoint(endpoint)}-loading`;
+            const responseId = `${getShortEndpoint(endpoint)}-response`;
+            const btnId = `${getShortEndpoint(endpoint)}-test-btn`;
+            
+            const input = document.getElementById(inputId);
+            const loading = document.getElementById(loadingId);
+            const response = document.getElementById(responseId);
+            const btn = document.getElementById(btnId);
+            
+            // 입력 검증
+            if (endpoint !== 'realtime' && (!input || !input.value.trim())) {
+                alert('테스트 입력을 작성해주세요.');
+                return;
+            }
+            
+            // 로딩 시작
+            if (loading) loading.classList.remove('hidden');
+            if (response) response.classList.add('hidden');
+            if (btn) btn.disabled = true;
+            
+            try {
+                const currentPrompt = getPromptFromEditor(endpoint);
+                
+                let result;
+                switch (endpoint) {
+                    case 'organize-diary':
+                        result = await testOrganizeDiary(input.value, currentPrompt);
+                        break;
+                    case 'context-extract':
+                        result = await testContextExtract(input.value, currentPrompt);
+                        break;
+                    case 'tts':
+                        result = await testTTS(input.value, currentPrompt);
+                        break;
+                    case 'realtime':
+                        result = await testRealtime(currentPrompt);
+                        break;
+                }
+                
+                displayResponse(responseId, result);
+                
+            } catch (error) {
+                displayError(responseId, error);
+            } finally {
+                if (loading) loading.classList.add('hidden');
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function testOrganizeDiary(text, customPrompt) {
+            const startTime = Date.now();
+            const response = await fetch(`${API_BASE_URL}/api/organize-diary`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, customPrompt })
+            });
+            
+            const data = await response.json();
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+            
+            if (!response.ok) throw new Error(data.error || 'API 호출 실패');
+            
+            return { type: 'organize-diary', data, elapsed };
+        }
+
+        async function testContextExtract(conversationText, customPrompt) {
+            const startTime = Date.now();
+            const response = await fetch(`${API_BASE_URL}/api/context/extract`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conversationText, customPrompt })
+            });
+            
+            const data = await response.json();
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+            
+            if (!response.ok) throw new Error(data.error || 'API 호출 실패');
+            
+            return { type: 'context-extract', data, elapsed };
+        }
+
+        async function testTTS(text, instructions) {
+            const voice = document.getElementById('tts-voice').value;
+            const startTime = Date.now();
+            
+            const response = await fetch(`${API_BASE_URL}/api/audio/speech`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, voice, instructions })
+            });
+            
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+            
+            if (response.ok && response.headers.get('content-type')?.includes('audio')) {
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                return { type: 'tts', audioUrl, elapsed, voice, textLength: text.length };
+            } else {
+                const data = await response.json();
+                throw new Error(data.error || 'TTS 생성 실패');
+            }
+        }
+
+        async function testRealtime(instructions) {
+            const model = document.getElementById('realtime-model').value;
+            const voice = document.getElementById('realtime-voice').value;
+            const startTime = Date.now();
+            
+            const response = await fetch(`${API_BASE_URL}/api/realtime/token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: 'playground_test_user',
+                    sessionConfig: { model, voice, instructions }
+                })
+            });
+            
+            const data = await response.json();
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+            
+            if (!response.ok) throw new Error(data.error || 'Token 발급 실패');
+            
+            return { type: 'realtime', data, elapsed };
+        }
+
+        // ============================================
+        // 결과 표시 함수
+        // ============================================
+
+        function displayResponse(responseId, result) {
+            const response = document.getElementById(responseId);
+            if (!response) return;
+            
+            response.classList.remove('hidden', 'error');
+            response.classList.add('success');
+            
+            let html = '<h4>✅ 테스트 성공!</h4>';
+            
+            switch (result.type) {
+                case 'organize-diary':
+                    html += `
+                        <div class="result-section">
+                            <strong>💬 오늘의 한줄</strong>
+                            <p>${result.data.summary.oneLiner}</p>
+                        </div>
+                        <div class="result-section">
+                            <strong>📌 주요 일상</strong>
+                            <ul>${result.data.summary.dailyHighlights.length > 0 ? 
+                                result.data.summary.dailyHighlights.map(h => `<li>${h}</li>`).join('') : 
+                                '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        <div class="result-section">
+                            <strong>🎯 목표 추적</strong>
+                            <ul>${result.data.summary.goalTracking.length > 0 ? 
+                                result.data.summary.goalTracking.map(g => `<li>${g}</li>`).join('') : 
+                                '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        <div class="result-section">
+                            <strong>🙏 감사한 일</strong>
+                            <ul>${result.data.summary.gratitude.length > 0 ? 
+                                result.data.summary.gratitude.map(g => `<li>${g}</li>`).join('') : 
+                                '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        <div class="result-section">
+                            <strong>😊 주요 감정</strong>
+                            <ul>${result.data.summary.emotions.length > 0 ? 
+                                result.data.summary.emotions.map(e => `<li>${e}</li>`).join('') : 
+                                '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        <div class="result-section">
+                            <strong>📖 전체 일기</strong>
+                            <p>${result.data.summary.fullDiary}</p>
+                        </div>
+                        <div class="meta-info">
+                            <small>
+                                원본 길이: ${result.data.originalTextLength}자 | 
+                                사용 토큰: ${result.data.tokensUsed} | 
+                                프롬프트: ${result.data._meta.promptUsed} |
+                                응답 시간: ${result.elapsed}초
+                            </small>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'context-extract':
+                    html += `
+                        <div class="result-section">
+                            <strong>🧠 추출된 컨텍스트</strong>
+                            <p style="line-height: 1.8; white-space: pre-wrap;">${result.data.context}</p>
+                        </div>
+                        <div class="meta-info">
+                            <small>
+                                대화 길이: ${result.data.conversationLength}자 | 
+                                사용 토큰: ${result.data.tokensUsed} | 
+                                응답 시간: ${result.elapsed}초
+                            </small>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'tts':
+                    html += `
+                        <div class="result-section">
+                            <strong>🔊 생성된 음성</strong>
+                            <audio controls style="width: 100%; margin-top: 10px;">
+                                <source src="${result.audioUrl}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        <div class="meta-info">
+                            <small>
+                                음성: ${result.voice} | 
+                                텍스트 길이: ${result.textLength}자 | 
+                                응답 시간: ${result.elapsed}초
+                            </small>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'realtime':
+                    const expiresIn = Math.floor((result.data.expiresAt - Date.now() / 1000) / 60);
+                    const expiresAtDate = new Date(result.data.expiresAt * 1000);
+                    
+                    html += `
+                        <div class="result-section">
+                            <strong>🔑 Token (클라이언트에서 사용)</strong>
+                            <p style="word-break: break-all; font-family: 'Courier New', monospace; background: rgba(0,0,0,0.05); padding: 12px; border-radius: 5px; border: 1px solid #ddd;">
+                                ${result.data.token}
+                            </p>
+                            <button class="btn-small" onclick="copyToClipboard('${result.data.token}', this)">
+                                📋 토큰 복사
+                            </button>
+                        </div>
+                        <div class="result-section">
+                            <strong>🆔 세션 ID</strong>
+                            <p style="font-family: monospace;">${result.data.sessionId}</p>
+                        </div>
+                        <div class="result-section">
+                            <strong>⏰ 만료 시간</strong>
+                            <p>📅 ${expiresAtDate.toLocaleString('ko-KR')}</p>
+                            <p style="color: ${expiresIn < 5 ? '#d32f2f' : '#1976d2'}; font-weight: bold;">
+                                ⏱️ 약 ${expiresIn}분 후 만료
+                            </p>
+                        </div>
+                        <div class="result-section">
+                            <strong>⚙️ 세션 설정</strong>
+                            <p><strong>모델:</strong> ${result.data.config.model}</p>
+                            <p><strong>음성:</strong> ${result.data.config.voice}</p>
+                        </div>
+                        <div class="meta-info">
+                            <small>응답 시간: ${result.elapsed}초</small>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            response.innerHTML = html;
+        }
+
+        function displayError(responseId, error) {
+            const response = document.getElementById(responseId);
+            if (!response) return;
+            
+            response.classList.remove('hidden', 'success');
+            response.classList.add('error');
+            response.innerHTML = `
+                <h4>❌ 오류 발생</h4>
+                <p><strong>에러 메시지:</strong> ${error.message}</p>
+                <pre style="margin-top: 15px; font-size: 0.85rem;">${error.stack || ''}</pre>
+            `;
+        }
+
+        // ============================================
+        // Export/Import 함수
+        // ============================================
+
+        function exportAllVersions() {
+            const data = loadFromStorage();
+            const json = JSON.stringify(data, null, 2);
+            
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `prompt-playground-backup-${Date.now()}.json`;
+            a.click();
+            
+            // 마지막 백업 시간 저장
+            data.metadata.lastBackup = Date.now();
+            saveToStorage(data);
+            
+            alert('✅ 모든 버전을 파일로 저장했습니다!');
+        }
+
+        function importVersions(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // 기존 데이터 확인
+                    const existingData = localStorage.getItem(STORAGE_KEY);
+                    
+                    if (existingData) {
+                        if (confirm('기존 데이터가 있습니다. 덮어쓰시겠습니까?\n(취소하면 병합됩니다)')) {
+                            // 덮어쓰기
+                            localStorage.setItem(STORAGE_KEY, e.target.result);
+                        } else {
+                            // 병합 (간단한 버전: import 우선)
+                            const existing = JSON.parse(existingData);
+                            const merged = { ...existing, ...importedData };
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                        }
+                    } else {
+                        localStorage.setItem(STORAGE_KEY, e.target.result);
+                    }
+                    
+                    alert('✅ 버전을 불러왔습니다! 페이지를 새로고침합니다.');
+                    location.reload();
+                    
+                } catch (error) {
+                    alert('❌ 파일 형식이 올바르지 않습니다: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function updateStorageUsage() {
+            const data = localStorage.getItem(STORAGE_KEY) || '';
+            const bytes = new Blob([data]).size;
+            const mb = (bytes / 1024 / 1024).toFixed(2);
+            const usageEl = document.getElementById('storage-usage');
+            if (usageEl) {
+                usageEl.textContent = `💾 사용 중: ${mb} MB / 5 MB`;
+            }
+        }
+
+        // ============================================
+        // 유틸리티 함수
+        // ============================================
+
+        function copyToClipboard(text, buttonElement) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = buttonElement.textContent;
+                buttonElement.textContent = '✅ 복사됨!';
+                buttonElement.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    buttonElement.textContent = originalText;
+                    buttonElement.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('복사 실패: ' + err.message);
+            });
+        }
+
+        // ============================================
+        // 초기화
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // LocalStorage 초기화
+            initializeStorage();
+            
+            // 첫 번째 탭 로드
+            loadPromptForTab('organize-diary');
+            
+            // 모든 캐릭터 카운터 이벤트 리스너 추가
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(textarea => {
+                textarea.addEventListener('input', () => {
+                    updateCharCounter(textarea.id);
+                });
+                updateCharCounter(textarea.id);
+            });
+            
+            // 저장 공간 사용량 표시
+            updateStorageUsage();
+            
+            console.log('✅ 프롬프트 플레이그라운드 초기화 완료!');
+        });
+    </script>
+</body>
+</html>
