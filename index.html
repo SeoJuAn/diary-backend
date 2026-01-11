@@ -54,26 +54,45 @@
             font-size: 0.9rem;
         }
 
-        .playground-link {
-            margin-top: 15px;
+        /* 메인 탭 스타일 */
+        .main-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
         }
 
-        .playground-link a {
+        .main-tab {
             background: rgba(255,255,255,0.3);
             color: white;
-            padding: 12px 24px;
+            padding: 12px 30px;
             border-radius: 25px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            transition: all 0.3s;
             border: 2px solid rgba(255,255,255,0.5);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
         }
 
-        .playground-link a:hover {
-            background: rgba(255,255,255,0.5);
+        .main-tab:hover {
+            background: rgba(255,255,255,0.4);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .main-tab.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+
+        .main-tab-content {
+            display: none;
+        }
+
+        .main-tab-content.active {
+            display: block;
         }
 
         .content {
@@ -346,11 +365,20 @@
             <h1>📔 Diary Backend API</h1>
             <p>음성 일기 정리 API 테스트</p>
             <div class="api-url">https://diary-backend-beta.vercel.app</div>
-            <div class="playground-link">
-                <a href="/prompt-playground.html">🎨 프롬프트 테스트 플레이그라운드 →</a>
+            
+            <!-- 메인 탭 -->
+            <div class="main-tabs">
+                <button class="main-tab active" onclick="switchMainTab('api-test')">
+                    🧪 API 테스트
+                </button>
+                <button class="main-tab" onclick="switchMainTab('prompt-playground')">
+                    🎨 프롬프트 플레이그라운드
+                </button>
             </div>
         </div>
 
+        <!-- API 테스트 탭 컨텐츠 -->
+        <div id="main-tab-api-test" class="main-tab-content active">
         <div class="content">
             <!-- 1. Organize Diary API 섹션 -->
             <div class="api-section">
@@ -659,6 +687,15 @@ const organizeDiary = async (transcribedText) => {
                 </ul>
             </div>
         </div>
+        </div>
+        <!-- API 테스트 탭 끝 -->
+
+        <!-- 프롬프트 플레이그라운드 탭 시작 -->
+        <div id="main-tab-prompt-playground" class="main-tab-content">
+            <iframe src="/prompt-playground.html" style="width: 100%; height: calc(100vh - 200px); border: none; border-radius: 0 0 15px 15px;"></iframe>
+        </div>
+        <!-- 프롬프트 플레이그라운드 탭 끝 -->
+
     </div>
 
     <script>
@@ -1165,6 +1202,37 @@ const sdpResponse = await fetch(
                 organizeDiary();
             }
         });
+
+        // ============================================
+        // 메인 탭 전환 함수
+        // ============================================
+        function switchMainTab(tabName) {
+            // 모든 메인 탭 버튼 비활성화
+            document.querySelectorAll('.main-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 모든 메인 탭 컨텐츠 숨기기
+            document.querySelectorAll('.main-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 선택한 탭 활성화
+            event.target.classList.add('active');
+            document.getElementById(`main-tab-${tabName}`).classList.add('active');
+            
+            // 프롬프트 플레이그라운드 탭 선택 시 초기화
+            if (tabName === 'prompt-playground' && !window.playgroundInitialized) {
+                initializePlayground();
+                window.playgroundInitialized = true;
+            }
+        }
+
+        // 프롬프트 플레이그라운드 초기화 (지연 로딩)
+        function initializePlayground() {
+            console.log('Initializing Prompt Playground...');
+            // playground 스크립트는 이미 하단에 포함되어 있음
+        }
     </script>
 </body>
 </html>
