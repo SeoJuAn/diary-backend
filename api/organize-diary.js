@@ -46,8 +46,8 @@ async function callOnpremiseLLM(messages, options = {}) {
   return response.json();
 }
 
-// System Prompt (백엔드에 고정)
-const SYSTEM_PROMPT = `당신은 친근하고 따뜻한 일기 작성 도우미입니다. 
+// System Prompt (기본값)
+const DEFAULT_SYSTEM_PROMPT = `당신은 친근하고 따뜻한 일기 작성 도우미입니다. 
 사용자가 말한 내용을 바탕으로 구조화된 일기 요약을 생성해주세요.
 
 규칙:
@@ -127,8 +127,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Request body 검증
-    const { text, llmProvider = 'openai' } = req.body;
+    // Request body 검증 (모든 파라미터 통합)
+    const { text, llmProvider = 'openai', customPrompt, customSchema } = req.body;
 
     if (!text || typeof text !== 'string' || text.trim() === '') {
       return res.status(400).json({
@@ -136,7 +136,9 @@ export default async function handler(req, res) {
         error: 'text 필드가 필요합니다 (음성 전사된 텍스트)',
         example: {
           text: '오늘은 아침 일찍 일어나서 운동을 했어요...',
-          llmProvider: 'openai | onpremise (선택, 기본값: openai)'
+          llmProvider: 'openai | onpremise (선택, 기본값: openai)',
+          customPrompt: '커스텀 프롬프트 (선택)',
+          customSchema: 'JSON Schema (선택)'
         }
       });
     }
@@ -159,8 +161,14 @@ export default async function handler(req, res) {
       });
     }
 
+    // 프롬프트 및 스키마 선택 (커스텀 또는 기본값)
+    const systemPrompt = customPrompt || DEFAULT_SYSTEM_PROMPT;
+    const jsonSchema = customSchema || JSON_SCHEMA;
+
     const model = LLM_PROVIDERS[llmProvider].model;
     console.log(`Organizing diary [${llmProvider}/${model}] for text length:`, text.length);
+    console.log('Using custom prompt:', !!customPrompt);
+    console.log('Using custom schema:', !!customSchema);
 
     let completion;
 
@@ -170,7 +178,7 @@ export default async function handler(req, res) {
       completion = await openai.chat.completions.create({
         model,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: `다음 내용을 일기로 정리해주세요:\n\n"${text}"` },
         ],
         temperature: 0.7,
@@ -180,15 +188,15 @@ export default async function handler(req, res) {
           json_schema: {
             name: 'diary_summary',
             strict: true,
-            schema: JSON_SCHEMA,
+            schema: jsonSchema,
           },
         },
       });
     } else {
       // 온프레미스: 직접 fetch 호출
-      const systemPrompt = SYSTEM_PROMPT + `\n\n반드시 다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이 JSON만):\n${JSON.stringify(JSON_SCHEMA.properties, null, 2)}`;
+      const onpremisePrompt = systemPrompt + `\n\n반드시 다음 JSON 형식으로만 응답하세요 (다른 텍스트 없이 JSON만):\n${JSON.stringify(jsonSchema.properties, null, 2)}`;
       completion = await callOnpremiseLLM([
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: onpremisePrompt },
         { role: 'user', content: `다음 내용을 일기로 정리해주세요:\n\n"${text}"` },
       ], { temperature: 0.7, max_tokens: 1000 });
     }
@@ -215,6 +223,10 @@ export default async function handler(req, res) {
       tokensUsed: completion.usage?.total_tokens || 0,
       llmProvider,
       model,
+      _meta: {
+        promptUsed: customPrompt ? 'custom' : 'default',
+        schemaUsed: customSchema ? 'custom' : 'default',
+      },
     });
 
   } catch (error) {

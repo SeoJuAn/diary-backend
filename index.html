@@ -54,6 +54,28 @@
             font-size: 0.9rem;
         }
 
+        .playground-link {
+            margin-top: 15px;
+        }
+
+        .playground-link a {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            transition: all 0.3s;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .playground-link a:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
         .content {
             padding: 30px;
         }
@@ -324,6 +346,9 @@
             <h1>📔 Diary Backend API</h1>
             <p>음성 일기 정리 API 테스트</p>
             <div class="api-url">https://diary-backend-beta.vercel.app</div>
+            <div class="playground-link">
+                <a href="/prompt-playground.html">🎨 프롬프트 테스트 플레이그라운드 →</a>
+            </div>
         </div>
 
         <div class="content">
