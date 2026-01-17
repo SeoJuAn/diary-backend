@@ -868,6 +868,98 @@
                 </button>
 
                 <div class="response hidden" id="realtime-response"></div>
+
+                <!-- WebRTC 연결 섹션 -->
+                <div id="realtime-webrtc-section" style="display: none; margin-top: 30px;">
+                    <div class="section">
+                        <h3>🌐 WebRTC P2P 연결</h3>
+                        <p class="description">
+                            위에서 발급받은 Ephemeral Token으로 OpenAI와 직접 P2P 연결하여 실시간 음성 대화를 시작합니다.
+                        </p>
+                        
+                        <!-- 토큰 입력 필드 -->
+                        <div class="form-group">
+                            <label for="realtime-token-input">🔑 Ephemeral Token (ek_로 시작):</label>
+                            <textarea id="realtime-token-input" 
+                                      placeholder="토큰 발급 후 자동으로 입력됩니다..."
+                                      style="min-height: 80px; font-family: monospace; font-size: 0.9rem;"
+                                      readonly></textarea>
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                ℹ️ 토큰 발급 후 자동 입력됩니다. 필요시 다른 토큰을 직접 붙여넣기할 수도 있습니다.
+                            </small>
+                        </div>
+
+                        <div class="connection-status-box">
+                            <div class="status-indicator">
+                                <span class="status-icon" id="realtime-webrtc-status-icon">🔴</span>
+                                <span class="status-text" id="realtime-webrtc-status-text">연결 안 됨</span>
+                            </div>
+                            <div id="realtime-webrtc-connection-info" style="display: none; margin-top: 15px;">
+                                <p><strong>세션 ID:</strong> <span id="realtime-webrtc-session-id">-</span></p>
+                                <p><strong>연결 타입:</strong> <span style="color: #667eea; font-weight: 600;">WebRTC P2P (Ephemeral Token)</span></p>
+                                <p><strong>프로토콜:</strong> RTCPeerConnection + DataChannel</p>
+                                <p><strong>인증:</strong> <code id="realtime-token-preview">-</code></p>
+                            </div>
+                        </div>
+
+                        <!-- 연결 버튼 -->
+                        <button class="btn" id="realtime-connect-webrtc-btn" onclick="connectRealtimeWebRTC()">
+                            <span>🚀 이 토큰으로 WebRTC P2P 연결 시작</span>
+                            <span class="loading hidden" id="realtime-connect-loading"></span>
+                        </button>
+                        <button class="btn" id="realtime-disconnect-webrtc-btn" onclick="disconnectRealtimeWebRTC()" style="display: none; background: #dc3545;">
+                            <span>⏸️ 연결 종료</span>
+                        </button>
+                    </div>
+
+                    <!-- 음성 채팅 섹션 -->
+                    <div id="realtime-voice-chat-section" style="display: none;">
+                        <div class="section">
+                            <h3>🎤 실시간 음성 대화</h3>
+                            <p class="description">
+                                WebRTC 연결이 완료되었습니다! 커스텀 프롬프트로 AI와 실시간 대화를 나눠보세요.
+                            </p>
+
+                            <!-- 오디오 상태 -->
+                            <div class="audio-status-box">
+                                <div class="audio-item">
+                                    <span class="audio-icon">🎤</span>
+                                    <div>
+                                        <strong>마이크</strong>
+                                        <p id="realtime-mic-status">⏸️ 비활성</p>
+                                    </div>
+                                </div>
+                                <div class="audio-item">
+                                    <span class="audio-icon">🔊</span>
+                                    <div>
+                                        <strong>스피커</strong>
+                                        <p id="realtime-speaker-status">⏸️ 비활성</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 음성 컨트롤 -->
+                            <div style="margin: 20px 0;">
+                                <button class="btn" id="realtime-start-voice-btn" onclick="startRealtimeVoiceChat()">
+                                    <span>🎤 말하기 시작</span>
+                                </button>
+                                <button class="btn" id="realtime-stop-voice-btn" onclick="stopRealtimeVoiceChat()" style="display: none; background: #dc3545;">
+                                    <span>⏹️ 말하기 중지</span>
+                                </button>
+                            </div>
+
+                            <!-- 대화 로그 -->
+                            <div class="chat-log">
+                                <h4>💬 대화 로그</h4>
+                                <div class="chat-messages" id="realtime-chat-messages">
+                                    <div class="chat-message system">
+                                        <strong>📢 시스템:</strong> WebRTC 연결이 완료되었습니다. "말하기 시작" 버튼을 눌러 대화를 시작하세요!
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1430,6 +1522,17 @@
             
             if (!response.ok) throw new Error(data.error || 'Token 발급 실패');
             
+            // 🔑 토큰 입력 필드에 자동 입력
+            document.getElementById('realtime-token-input').value = data.token;
+            document.getElementById('realtime-token-input').removeAttribute('readonly');
+            
+            // WebRTC 섹션 표시
+            document.getElementById('realtime-webrtc-section').style.display = 'block';
+            
+            // 전역 변수에 저장
+            realtimeCurrentToken = data.token;
+            realtimeSessionId = data.sessionId;
+            
             return { type: 'realtime', data, elapsed };
         }
 
@@ -1664,6 +1767,277 @@
             }).catch(err => {
                 alert('복사 실패: ' + err.message);
             });
+        }
+
+        // ============================================
+        // Realtime WebRTC 전역 변수
+        // ============================================
+        
+        let realtimePeerConnection = null;
+        let realtimeDataChannel = null;
+        let realtimeLocalStream = null;
+        let realtimeCurrentToken = null;
+        let realtimeSessionId = null;
+
+        // ============================================
+        // Realtime WebRTC 함수들
+        // ============================================
+
+        async function connectRealtimeWebRTC() {
+            const tokenInput = document.getElementById('realtime-token-input');
+            const inputToken = tokenInput.value.trim();
+            
+            if (!inputToken) {
+                alert('❌ 토큰을 입력해주세요!\n\n위에서 "토큰 발급하기" 버튼을 눌러 토큰을 발급받으세요.');
+                return;
+            }
+            
+            if (!inputToken.startsWith('ek_')) {
+                alert('❌ 올바른 Ephemeral Token 형식이 아닙니다!\n\n토큰은 "ek_"로 시작해야 합니다.');
+                return;
+            }
+            
+            realtimeCurrentToken = inputToken;
+            console.log('🔑 사용할 토큰:', realtimeCurrentToken.substring(0, 20) + '...');
+            
+            updateRealtimeWebRTCStatus('connecting', '🟡', '연결 중...');
+            
+            const loadingEl = document.getElementById('realtime-connect-loading');
+            const btnEl = document.getElementById('realtime-connect-webrtc-btn');
+            
+            loadingEl.classList.remove('hidden');
+            btnEl.disabled = true;
+            
+            try {
+                realtimePeerConnection = new RTCPeerConnection();
+                console.log('📡 RTCPeerConnection 생성됨');
+                
+                realtimePeerConnection.addEventListener('connectionstatechange', () => {
+                    const state = realtimePeerConnection.connectionState;
+                    console.log('🔄 Connection state:', state);
+                    
+                    if (state === 'connected') {
+                        updateRealtimeWebRTCStatus('connected', '🟢', '연결됨 (WebRTC P2P)');
+                        showRealtimeVoiceChatSection();
+                    } else if (state === 'disconnected' || state === 'failed') {
+                        updateRealtimeWebRTCStatus('disconnected', '🔴', '연결 끊김');
+                    } else if (state === 'connecting') {
+                        updateRealtimeWebRTCStatus('connecting', '🟡', '연결 중...');
+                    }
+                });
+                
+                realtimePeerConnection.addEventListener('track', (event) => {
+                    console.log('🔊 원격 오디오 트랙 수신:', event.track);
+                    const audioElement = document.createElement('audio');
+                    audioElement.srcObject = event.streams[0];
+                    audioElement.autoplay = true;
+                    document.body.appendChild(audioElement);
+                    updateRealtimeSpeakerStatus('✅ 활성화 (AI 음성 재생 중)');
+                });
+                
+                try {
+                    realtimeLocalStream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        } 
+                    });
+                    
+                    realtimeLocalStream.getTracks().forEach(track => {
+                        realtimePeerConnection.addTrack(track, realtimeLocalStream);
+                    });
+                    
+                    updateRealtimeMicStatus('✅ 활성화 (마이크 준비 완료)');
+                    console.log('🎤 마이크 스트림 획득 완료');
+                } catch (micError) {
+                    console.warn('⚠️ 마이크 접근 실패:', micError);
+                    updateRealtimeMicStatus('⚠️ 권한 거부됨');
+                }
+                
+                realtimeDataChannel = realtimePeerConnection.createDataChannel('oai-events');
+                
+                realtimeDataChannel.addEventListener('open', () => {
+                    console.log('✅ DataChannel 열림');
+                    addRealtimeChatMessage('system', 'DataChannel이 열렸습니다. 양방향 통신 준비 완료!');
+                });
+                
+                realtimeDataChannel.addEventListener('message', (event) => {
+                    console.log('📥 메시지 수신:', event.data);
+                    handleRealtimeWebRTCMessage(event.data);
+                });
+                
+                const offer = await realtimePeerConnection.createOffer();
+                await realtimePeerConnection.setLocalDescription(offer);
+                console.log('📤 SDP Offer 생성');
+                
+                const response = await fetch('https://api.openai.com/v1/realtime/calls', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${realtimeCurrentToken}`,
+                        'Content-Type': 'application/sdp',
+                    },
+                    body: offer.sdp,
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`OpenAI 연결 실패: ${response.status} - ${errorText}`);
+                }
+                
+                const answerSdp = await response.text();
+                console.log('📥 SDP Answer 수신');
+                
+                await realtimePeerConnection.setRemoteDescription({
+                    type: 'answer',
+                    sdp: answerSdp,
+                });
+                
+                console.log('✅ WebRTC P2P 연결 완료!');
+                
+                document.getElementById('realtime-connect-webrtc-btn').style.display = 'none';
+                document.getElementById('realtime-disconnect-webrtc-btn').style.display = 'inline-flex';
+                document.getElementById('realtime-webrtc-connection-info').style.display = 'block';
+                document.getElementById('realtime-webrtc-session-id').textContent = realtimeSessionId || 'N/A';
+                
+                const tokenPreview = realtimeCurrentToken.substring(0, 20) + '...' + realtimeCurrentToken.substring(realtimeCurrentToken.length - 10);
+                document.getElementById('realtime-token-preview').textContent = tokenPreview;
+                
+            } catch (error) {
+                console.error('❌ WebRTC 연결 실패:', error);
+                updateRealtimeWebRTCStatus('error', '❌', '연결 실패: ' + error.message);
+                alert('WebRTC 연결 실패: ' + error.message);
+                
+                if (realtimePeerConnection) {
+                    realtimePeerConnection.close();
+                    realtimePeerConnection = null;
+                }
+            } finally {
+                loadingEl.classList.add('hidden');
+                btnEl.disabled = false;
+            }
+        }
+
+        function disconnectRealtimeWebRTC() {
+            if (realtimeDataChannel) {
+                realtimeDataChannel.close();
+                realtimeDataChannel = null;
+            }
+            
+            if (realtimePeerConnection) {
+                realtimePeerConnection.close();
+                realtimePeerConnection = null;
+            }
+            
+            if (realtimeLocalStream) {
+                realtimeLocalStream.getTracks().forEach(track => track.stop());
+                realtimeLocalStream = null;
+            }
+            
+            updateRealtimeWebRTCStatus('disconnected', '🔴', '연결 안 됨');
+            updateRealtimeMicStatus('⏸️ 비활성');
+            updateRealtimeSpeakerStatus('⏸️ 비활성');
+            
+            document.getElementById('realtime-connect-webrtc-btn').style.display = 'inline-flex';
+            document.getElementById('realtime-disconnect-webrtc-btn').style.display = 'none';
+            document.getElementById('realtime-voice-chat-section').style.display = 'none';
+            document.getElementById('realtime-webrtc-connection-info').style.display = 'none';
+            
+            console.log('🔌 WebRTC 연결 종료');
+        }
+
+        function startRealtimeVoiceChat() {
+            if (!realtimeDataChannel || realtimeDataChannel.readyState !== 'open') {
+                alert('❌ WebRTC 연결이 활성화되어 있지 않습니다!');
+                return;
+            }
+            
+            // 현재 편집 중인 프롬프트 가져오기
+            const instructions = document.getElementById('realtime-instructions').value;
+            
+            realtimeDataChannel.send(JSON.stringify({
+                type: 'response.create',
+                response: {
+                    output_modalities: ['text', 'audio'],
+                    instructions: instructions || '사용자의 말을 듣고 친근하게 응답해주세요.'
+                }
+            }));
+            
+            document.getElementById('realtime-start-voice-btn').style.display = 'none';
+            document.getElementById('realtime-stop-voice-btn').style.display = 'inline-flex';
+            
+            addRealtimeChatMessage('system', '🎤 음성 입력이 시작되었습니다. 커스텀 프롬프트로 대화합니다!');
+            console.log('🎤 음성 채팅 시작 (프롬프트:', instructions.substring(0, 50) + '...)');
+        }
+
+        function stopRealtimeVoiceChat() {
+            document.getElementById('realtime-start-voice-btn').style.display = 'inline-flex';
+            document.getElementById('realtime-stop-voice-btn').style.display = 'none';
+            
+            addRealtimeChatMessage('system', '⏹️ 음성 입력이 중지되었습니다.');
+            console.log('⏹️ 음성 채팅 중지');
+        }
+
+        function handleRealtimeWebRTCMessage(data) {
+            try {
+                const message = JSON.parse(data);
+                console.log('📨 수신 메시지 타입:', message.type);
+                
+                if (message.type === 'conversation.item.input_audio_transcription.completed') {
+                    addRealtimeChatMessage('user', message.transcript);
+                }
+                else if (message.type === 'response.audio_transcript.done') {
+                    addRealtimeChatMessage('ai', message.transcript);
+                }
+                else if (message.type === 'response.done') {
+                    console.log('✅ AI 응답 완료');
+                }
+                else if (message.type === 'error') {
+                    addRealtimeChatMessage('system', `❌ 에러: ${message.error.message}`);
+                    console.error('❌ 에러:', message.error);
+                }
+            } catch (e) {
+                console.warn('⚠️ 메시지 파싱 실패:', data);
+            }
+        }
+
+        function updateRealtimeWebRTCStatus(state, icon, text) {
+            document.getElementById('realtime-webrtc-status-icon').textContent = icon;
+            document.getElementById('realtime-webrtc-status-text').textContent = text;
+        }
+
+        function updateRealtimeMicStatus(status) {
+            document.getElementById('realtime-mic-status').textContent = status;
+        }
+
+        function updateRealtimeSpeakerStatus(status) {
+            document.getElementById('realtime-speaker-status').textContent = status;
+        }
+
+        function showRealtimeVoiceChatSection() {
+            document.getElementById('realtime-voice-chat-section').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('realtime-voice-chat-section').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }, 300);
+        }
+
+        function addRealtimeChatMessage(sender, text) {
+            const messagesDiv = document.getElementById('realtime-chat-messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `chat-message ${sender}`;
+            
+            const prefix = sender === 'user' ? '👤 사용자' : 
+                         sender === 'ai' ? '🤖 AI' : 
+                         '📢 시스템';
+            
+            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            messageEl.innerHTML = `<strong>${prefix}</strong> [${timestamp}]: ${text}`;
+            
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
         // ============================================
