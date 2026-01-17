@@ -415,7 +415,7 @@
                 <h3>✨ 일기 정리 API</h3>
                 <div class="api-info">
                     <span class="method post">POST</span>
-                    <span>/api/organize-diary</span>
+                    <span>https://diary-backend-beta.vercel.app/api/organize-diary</span>
                 </div>
                 <p class="description">
                     음성 전사 텍스트를 받아서 구조화된 일기로 자동 변환합니다.
@@ -459,7 +459,7 @@
                 <h3>🎙️ 음성 전사 (STT) API</h3>
                 <div class="api-info">
                     <span class="method post">POST</span>
-                    <span>/api/audio/transcribe</span>
+                    <span>https://diary-backend-beta.vercel.app/api/audio/transcribe</span>
                 </div>
                 <p class="description">
                     오디오 파일을 텍스트로 변환합니다. OpenAI Whisper (gpt-4o-transcribe)를 사용하여
@@ -487,7 +487,7 @@
                 <h3>🔊 음성 합성 (TTS) API</h3>
                 <div class="api-info">
                     <span class="method post">POST</span>
-                    <span>/api/audio/speech</span>
+                    <span>https://diary-backend-beta.vercel.app/api/audio/speech</span>
                 </div>
                 <p class="description">
                     텍스트를 자연스러운 음성으로 변환합니다. OpenAI TTS (gpt-4o-mini-tts)를 사용하여
@@ -528,7 +528,7 @@
                 <h3>🧠 대화 컨텍스트 추출 API</h3>
                 <div class="api-info">
                     <span class="method post">POST</span>
-                    <span>/api/context/extract</span>
+                    <span>https://diary-backend-beta.vercel.app/api/context/extract</span>
                 </div>
                 <p class="description">
                     대화 내용을 분석하여 주요 컨텍스트를 추출합니다. 주제, 의도, 키워드, 감정, 흐름을 
@@ -564,7 +564,7 @@
                 <h3>🎙️ Realtime Token 발급 API</h3>
                 <div class="api-info">
                     <span class="method post">POST</span>
-                    <span>/api/realtime/token</span>
+                    <span>https://diary-backend-beta.vercel.app/api/realtime/token</span>
                 </div>
                 <p class="description">
                     React Native 앱에서 사용할 Ephemeral Token을 발급합니다. 
@@ -611,45 +611,221 @@
                 <div class="response hidden" id="realtime-token-response"></div>
             </div>
 
-            <!-- 6. API 명세서 섹션 -->
+            <!-- 6. 전체 API 명세서 섹션 -->
             <div class="api-section">
-                <h3>📖 API 명세서</h3>
-                
-                <h4>🔹 Request</h4>
-                <pre class="code-block">{
-  "text": "음성 전사된 텍스트"
+                <h3>📖 전체 API 명세서</h3>
+                <p class="description" style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; border-radius: 5px; margin-bottom: 20px;">
+                    <strong>💡 비개발자를 위한 가이드:</strong><br>
+                    아래 명세서는 각 API의 전체 URL, 필요한 데이터, 받을 수 있는 응답을 정리한 것입니다.<br>
+                    개발 지식이 없어도 이 문서만 보고 API를 이해하고 테스트할 수 있습니다.
+                </p>
+
+                <!-- API 1: 일기 정리 -->
+                <h4 style="background: #667eea; color: white; padding: 10px 15px; border-radius: 5px; margin-top: 25px;">
+                    1️⃣ 일기 정리 API
+                </h4>
+                <div style="margin-left: 15px;">
+                    <p><strong>🌐 전체 URL:</strong></p>
+                    <pre class="code-block" style="background: #f8f9fa; color: #333; border-left: 4px solid #667eea;">POST https://diary-backend-beta.vercel.app/api/organize-diary</pre>
+                    
+                    <p><strong>📝 무엇을 하나요?</strong></p>
+                    <p style="margin-left: 15px;">음성으로 녹음한 일기를 AI가 정리해서 구조화된 형태로 만들어줍니다.</p>
+                    
+                    <p><strong>📥 보내야 할 데이터:</strong></p>
+                    <pre class="code-block">{
+  "text": "오늘 아침에 운동했어요. 날씨가 좋았습니다.",
+  "llmProvider": "openai"  // 선택사항: "openai" 또는 "onpremise"
 }</pre>
 
-                <h4>🔹 Response (성공 - 200 OK)</h4>
-                <pre class="code-block">{
+                    <p><strong>📤 받을 수 있는 응답 (성공):</strong></p>
+                    <pre class="code-block">{
   "success": true,
   "summary": {
-    "oneLiner": "하루를 한 문장으로 요약",
-    "dailyHighlights": ["활동1", "활동2", "활동3"],
-    "goalTracking": ["목표1", "목표2"],
-    "gratitude": ["감사1", "감사2", "감사3"],
-    "emotions": ["감정1", "감정2", "감정3"],
-    "fullDiary": "3-5문장으로 정리된 전체 일기"
+    "oneLiner": "상쾌한 아침 운동으로 시작한 하루",
+    "dailyHighlights": ["아침 운동", "좋은 날씨"],
+    "goalTracking": ["운동 목표 달성"],
+    "gratitude": ["좋은 날씨"],
+    "emotions": ["상쾌함", "뿌듯함"],
+    "fullDiary": "오늘은 아침 일찍 일어나서 운동을 했다. 날씨도 좋아서 기분이 상쾌했다."
   },
-  "originalTextLength": 150,
-  "tokensUsed": 1061
+  "originalTextLength": 42,
+  "tokensUsed": 450,
+  "llmProvider": "openai",
+  "model": "gpt-4o"
+}</pre>
+                </div>
+
+                <!-- API 2: 음성 전사 -->
+                <h4 style="background: #667eea; color: white; padding: 10px 15px; border-radius: 5px; margin-top: 30px;">
+                    2️⃣ 음성 전사 API (Whisper)
+                </h4>
+                <div style="margin-left: 15px;">
+                    <p><strong>🌐 전체 URL:</strong></p>
+                    <pre class="code-block" style="background: #f8f9fa; color: #333; border-left: 4px solid #667eea;">POST https://diary-backend-beta.vercel.app/api/audio/transcribe</pre>
+                    
+                    <p><strong>📝 무엇을 하나요?</strong></p>
+                    <p style="margin-left: 15px;">녹음된 음성 파일을 텍스트로 자동 변환합니다.</p>
+                    
+                    <p><strong>📥 보내야 할 데이터:</strong></p>
+                    <p style="margin-left: 15px; background: #e9ecef; padding: 10px; border-radius: 5px;">
+                        <code>multipart/form-data</code> 형식으로 파일 전송<br>
+                        • 필드명: <code>file</code><br>
+                        • 지원 형식: mp4, mp3, wav, m4a, webm<br>
+                        • 최대 크기: 10MB
+                    </p>
+
+                    <p><strong>📤 받을 수 있는 응답 (성공):</strong></p>
+                    <pre class="code-block">{
+  "success": true,
+  "text": "오늘 아침에 일찍 일어나서 운동을 했어요. 날씨가 정말 좋았습니다.",
+  "language": "ko",
+  "duration": 15.2
+}</pre>
+                </div>
+
+                <!-- API 3: TTS -->
+                <h4 style="background: #667eea; color: white; padding: 10px 15px; border-radius: 5px; margin-top: 30px;">
+                    3️⃣ 텍스트 음성 합성 API (TTS)
+                </h4>
+                <div style="margin-left: 15px;">
+                    <p><strong>🌐 전체 URL:</strong></p>
+                    <pre class="code-block" style="background: #f8f9fa; color: #333; border-left: 4px solid #667eea;">POST https://diary-backend-beta.vercel.app/api/audio/speech</pre>
+                    
+                    <p><strong>📝 무엇을 하나요?</strong></p>
+                    <p style="margin-left: 15px;">텍스트를 자연스러운 음성으로 변환합니다.</p>
+                    
+                    <p><strong>📥 보내야 할 데이터:</strong></p>
+                    <pre class="code-block">{
+  "text": "안녕하세요, 만나서 반갑습니다.",
+  "voice": "alloy",  // 선택사항: alloy, echo, shimmer 등
+  "instructions": "친근하고 밝은 톤으로",  // 선택사항
+  "response_format": "mp3"  // 선택사항: mp3, wav, opus 등
 }</pre>
 
-                <h4>🔹 Response (에러 - 400/500)</h4>
-                <pre class="code-block">{
+                    <p><strong>📤 받을 수 있는 응답 (성공):</strong></p>
+                    <p style="margin-left: 15px; background: #d4edda; padding: 10px; border-radius: 5px;">
+                        MP3 오디오 파일 (바이너리 데이터)<br>
+                        브라우저에서 직접 재생하거나 다운로드할 수 있습니다.
+                    </p>
+                </div>
+
+                <!-- API 4: 컨텍스트 추출 -->
+                <h4 style="background: #667eea; color: white; padding: 10px 15px; border-radius: 5px; margin-top: 30px;">
+                    4️⃣ 대화 컨텍스트 추출 API
+                </h4>
+                <div style="margin-left: 15px;">
+                    <p><strong>🌐 전체 URL:</strong></p>
+                    <pre class="code-block" style="background: #f8f9fa; color: #333; border-left: 4px solid #667eea;">POST https://diary-backend-beta.vercel.app/api/context/extract</pre>
+                    
+                    <p><strong>📝 무엇을 하나요?</strong></p>
+                    <p style="margin-left: 15px;">대화 내용에서 주요 정보(주제, 의도, 감정 등)를 자동으로 분석합니다.</p>
+                    
+                    <p><strong>📥 보내야 할 데이터:</strong></p>
+                    <pre class="code-block">{
+  "conversationText": "사용자: 오늘 운동했어요\nAI: 좋네요! 어떤 운동 하셨나요?",
+  "llmProvider": "openai"  // 선택사항
+}</pre>
+
+                    <p><strong>📤 받을 수 있는 응답 (성공):</strong></p>
+                    <pre class="code-block">{
+  "success": true,
+  "context": "• 주요 주제: 운동 및 건강 관리\n• 사용자 의도: 운동 활동 공유\n• 키워드: 운동, 건강\n• 감정 톤: 긍정적",
+  "conversationLength": 50,
+  "tokensUsed": 120,
+  "llmProvider": "openai",
+  "model": "gpt-4o"
+}</pre>
+                </div>
+
+                <!-- API 5: Realtime 토큰 -->
+                <h4 style="background: #667eea; color: white; padding: 10px 15px; border-radius: 5px; margin-top: 30px;">
+                    5️⃣ 실시간 음성 대화 토큰 발급 API
+                </h4>
+                <div style="margin-left: 15px;">
+                    <p><strong>🌐 전체 URL:</strong></p>
+                    <pre class="code-block" style="background: #f8f9fa; color: #333; border-left: 4px solid #667eea;">POST https://diary-backend-beta.vercel.app/api/realtime/token</pre>
+                    
+                    <p><strong>📝 무엇을 하나요?</strong></p>
+                    <p style="margin-left: 15px;">WebRTC 실시간 음성 대화를 위한 보안 토큰을 생성합니다 (30분 유효).</p>
+                    
+                    <p><strong>📥 보내야 할 데이터:</strong></p>
+                    <pre class="code-block">{
+  "userId": "user_12345",  // 선택사항
+  "sessionConfig": {
+    "model": "gpt-4o-realtime-preview-2024-12-17",  // 필수
+    "voice": "alloy",  // 선택사항
+    "instructions": "친근한 일기 도우미처럼 대화해주세요"  // 선택사항
+  }
+}</pre>
+
+                    <p><strong>📤 받을 수 있는 응답 (성공):</strong></p>
+                    <pre class="code-block">{
+  "success": true,
+  "token": "ek_68af296e8e408191a1120ab6383263c2",  // ⚠️ 중요: 안전하게 보관
+  "sessionId": "sess_C9CiUVUzUzYIssh3ELY1d",
+  "expiresAt": 1756310470,  // Unix timestamp (30분 후)
+  "config": {
+    "model": "gpt-4o-realtime-preview-2024-12-17",
+    "voice": "alloy"
+  }
+}</pre>
+                    <p style="background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; border-radius: 5px; margin-top: 10px;">
+                        <strong>⚠️ 주의:</strong> 받은 <code>token</code>은 WebRTC 연결 시 사용됩니다. 30분 후 자동 만료됩니다.
+                    </p>
+                </div>
+
+                <!-- API 6: 세션 종료 -->
+                <h4 style="background: #667eea; color: white; padding: 10px 15px; border-radius: 5px; margin-top: 30px;">
+                    6️⃣ 실시간 대화 세션 종료 API
+                </h4>
+                <div style="margin-left: 15px;">
+                    <p><strong>🌐 전체 URL:</strong></p>
+                    <pre class="code-block" style="background: #f8f9fa; color: #333; border-left: 4px solid #667eea;">POST https://diary-backend-beta.vercel.app/api/realtime/end</pre>
+                    
+                    <p><strong>📝 무엇을 하나요?</strong></p>
+                    <p style="margin-left: 15px;">실시간 음성 대화가 끝났을 때 사용량(통화 시간, 메시지 수 등)을 기록합니다.</p>
+                    
+                    <p><strong>📥 보내야 할 데이터:</strong></p>
+                    <pre class="code-block">{
+  "sessionId": "sess_C9CiUVUzUzYIssh3ELY1d",  // 필수 (토큰 발급 시 받은 ID)
+  "duration": 320,  // 선택사항: 통화 시간(초)
+  "messageCount": 15,  // 선택사항: 메시지 수
+  "endedBy": "user"  // 선택사항: "user", "timeout", "error"
+}</pre>
+
+                    <p><strong>📤 받을 수 있는 응답 (성공):</strong></p>
+                    <pre class="code-block">{
+  "success": true,
+  "message": "Session ended and logged successfully",
+  "sessionData": {
+    "sessionId": "sess_C9CiUVUzUzYIssh3ELY1d",
+    "duration": 320,
+    "messageCount": 15,
+    "endedBy": "user"
+  }
+}</pre>
+                </div>
+
+                <!-- 공통 에러 응답 -->
+                <h4 style="background: #dc3545; color: white; padding: 10px 15px; border-radius: 5px; margin-top: 30px;">
+                    ❌ 공통 에러 응답
+                </h4>
+                <div style="margin-left: 15px;">
+                    <p><strong>모든 API에서 에러 발생 시:</strong></p>
+                    <pre class="code-block">{
   "success": false,
-  "error": "에러 메시지"
+  "error": "구체적인 에러 메시지",
+  "details": "상세 정보 (개발 모드에서만 표시)"
 }</pre>
-
-                <h4>🔹 주요 필드 설명</h4>
-                <ul class="feature-list">
-                    <li><strong>oneLiner</strong>: 오늘 하루를 한 문장으로 요약</li>
-                    <li><strong>dailyHighlights</strong>: 주요 일상 활동 (최대 3개, 2-4단어)</li>
-                    <li><strong>goalTracking</strong>: 목표 관련 활동/진전 (최대 3개)</li>
-                    <li><strong>gratitude</strong>: 감사한 일들 (최대 3개)</li>
-                    <li><strong>emotions</strong>: 주요 감정들 (최대 3개)</li>
-                    <li><strong>fullDiary</strong>: 자연스럽게 정리된 전체 일기 (3-5문장)</li>
-                </ul>
+                    <p style="margin-left: 15px;">
+                        <strong>주요 에러 코드:</strong><br>
+                        • <code>400</code>: 잘못된 요청 (필수 파라미터 누락)<br>
+                        • <code>401</code>: API 키 인증 실패<br>
+                        • <code>402</code>: API 할당량 초과<br>
+                        • <code>413</code>: 파일 크기 초과 (10MB 이상)<br>
+                        • <code>500</code>: 서버 내부 오류
+                    </p>
+                </div>
             </div>
 
             <!-- 3. cURL 예제 섹션 -->
