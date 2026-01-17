@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📚 Diary Backend API 정의서 & 테스트</title>
+    <title>Diary Backend API 테스트</title>
     <style>
         * {
             margin: 0;
@@ -12,261 +12,213 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            line-height: 1.6;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
+            max-width: 900px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
         .header {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
             text-align: center;
         }
 
         .header h1 {
             font-size: 2.5rem;
-            color: #667eea;
-            margin-bottom: 15px;
-        }
-
-        .header .subtitle {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .base-url {
-            background: #f8f9fa;
-            padding: 15px 25px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-            margin: 20px 0;
-            font-family: 'Monaco', 'Courier New', monospace;
-        }
-
-        .base-url strong {
-            color: #667eea;
-            margin-right: 10px;
-        }
-
-        .base-url code {
-            background: #667eea;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 5px;
-            font-size: 1.1rem;
-        }
-
-        /* API 카드 */
-        .api-section {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .api-header {
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-        }
-
-        .api-title {
-            display: flex;
-            align-items: center;
-            gap: 15px;
             margin-bottom: 10px;
         }
 
-        .api-number {
-            background: #667eea;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+        .header p {
             font-size: 1.2rem;
+            opacity: 0.95;
+            margin-bottom: 15px;
         }
 
-        .api-title h2 {
-            color: #667eea;
-            font-size: 1.8rem;
-        }
-
-        .api-description {
-            color: #666;
-            font-size: 1.1rem;
-            margin-left: 55px;
-        }
-
-        /* 엔드포인트 박스 */
-        .endpoint-box {
-            background: #f8f9fa;
-            border-left: 5px solid #667eea;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-family: 'Monaco', 'Courier New', monospace;
-        }
-
-        .method {
+        .api-url {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
             display: inline-block;
-            padding: 5px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-            margin-right: 10px;
+            font-family: monospace;
             font-size: 0.9rem;
         }
 
-        .method-post {
-            background: #28a745;
-            color: white;
+        /* 최상단 탭 네비게이션 */
+        .top-nav {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0;
+            margin: 0;
         }
 
-        .method-get {
-            background: #007bff;
-            color: white;
+        .main-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .endpoint-url {
+        .main-tab {
+            background: transparent;
+            color: #666;
+            padding: 20px 40px;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
             font-size: 1.1rem;
-            color: #333;
-            word-break: break-all;
+            transition: all 0.3s;
+            position: relative;
         }
 
-        /* 상세 정보 섹션 */
-        .info-section {
-            margin: 25px 0;
-        }
-
-        .info-section h3 {
+        .main-tab:hover {
+            background: #fff;
             color: #667eea;
+        }
+
+        .main-tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .main-tab-content {
+            display: none;
+            min-height: calc(100vh - 65px);
+        }
+
+        .main-tab-content.active {
+            display: block;
+        }
+
+        #main-tab-api-test {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 20px 40px 20px;
+        }
+
+        #main-tab-prompt-playground {
+            background: white;
+            padding: 0;
+            margin: 0;
+        }
+
+        #main-tab-webrtc-test {
+            background: white;
+            padding: 0;
+            margin: 0;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .api-section {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 25px;
+            background: #f8f9fa;
+        }
+
+        .api-section h3 {
+            color: #333;
             margin-bottom: 15px;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .info-section h3::before {
-            content: '▶';
-            font-size: 0.8rem;
+        .api-section h4 {
+            color: #555;
+            margin: 20px 0 10px 0;
+            font-size: 1.1rem;
         }
 
-        /* 코드 블록 */
-        .code-block {
-            background: #282c34;
-            color: #abb2bf;
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 15px 0;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 0.95rem;
-            line-height: 1.5;
+        .api-info {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #e9ecef;
+            border-radius: 5px;
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .code-block pre {
-            margin: 0;
-        }
-
-        /* 파라미터 테이블 */
-        .params-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .params-table th,
-        .params-table td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .params-table th {
-            background: #667eea;
-            color: white;
-            font-weight: 600;
-        }
-
-        .params-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .params-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .badge {
+        .method {
             display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
         }
 
-        .badge-required {
-            background: #dc3545;
+        .method.post { 
+            background: #007bff; 
+            color: white; 
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-right: 10px;
+            margin-top: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .badge-optional {
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-small {
             background: #6c757d;
             color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
         }
 
-        .badge-string {
-            background: #17a2b8;
-            color: white;
+        .btn-small:hover {
+            background: #5a6268;
         }
 
-        .badge-number {
-            background: #ffc107;
-            color: #333;
-        }
-
-        .badge-object {
-            background: #28a745;
-            color: white;
-        }
-
-        .badge-array {
-            background: #e83e8c;
-            color: white;
-        }
-
-        /* 테스트 섹션 */
-        .test-section {
-            background: #f0f4ff;
-            border: 2px dashed #667eea;
-            border-radius: 12px;
-            padding: 25px;
-            margin: 25px 0;
-        }
-
-        .test-section h3 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.4rem;
+        .sample-buttons {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         .form-group {
@@ -278,199 +230,109 @@
             margin-bottom: 8px;
             font-weight: 600;
             color: #333;
+            font-size: 1rem;
         }
 
-        .form-group input,
-        .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
+            padding: 12px;
+            border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 1rem;
             font-family: inherit;
-            transition: border-color 0.3s;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.2s;
         }
 
-        .form-group input:focus,
-        .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: #667eea;
         }
 
-        .form-group textarea {
-            min-height: 120px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            resize: vertical;
-        }
-
-        .btn {
-            background: #667eea;
-            color: white;
-            padding: 15px 35px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* 결과 박스 */
-        .result-box {
-            margin-top: 25px;
+        .response {
+            margin-top: 20px;
             padding: 20px;
             border-radius: 8px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            word-break: break-all;
+            font-family: 'Courier New', monospace;
             max-height: 500px;
             overflow-y: auto;
+            animation: fadeIn 0.3s;
         }
 
-        .result-success {
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .response.success {
             background: #d4edda;
-            border: 2px solid #28a745;
+            border: 2px solid #c3e6cb;
             color: #155724;
         }
 
-        .result-error {
+        .response.error {
             background: #f8d7da;
-            border: 2px solid #dc3545;
+            border: 2px solid #f5c6cb;
             color: #721c24;
         }
 
-        .result-loading {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            color: #856404;
-        }
-
-        /* 예제 섹션 */
-        .example-section {
-            background: #fff9e6;
-            border-left: 5px solid #ffc107;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .example-section h4 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-
-        /* 주의사항 박스 */
-        .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 5px solid;
-        }
-
-        .alert-info {
-            background: #e7f3ff;
-            border-color: #007bff;
-            color: #004085;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            border-color: #ffc107;
-            color: #856404;
-        }
-
-        .alert-danger {
-            background: #f8d7da;
-            border-color: #dc3545;
-            color: #721c24;
-        }
-
-        /* 탭 네비게이션 */
-        .tab-nav {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #e0e0e0;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            padding: 15px 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #666;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab-btn:hover {
-            color: #667eea;
-            background: #f8f9fa;
-        }
-
-        .tab-btn.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* 복사 버튼 */
-        .copy-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 15px;
+        .result-section {
+            margin: 15px 0;
+            padding: 12px;
+            background: rgba(255,255,255,0.5);
             border-radius: 5px;
-            cursor: pointer;
+        }
+
+        .result-section strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+
+        .result-section p {
+            margin: 5px 0;
+            line-height: 1.6;
+        }
+
+        .result-section ul {
+            margin: 5px 0;
+            padding-left: 25px;
+        }
+
+        .result-section li {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+
+        .meta-info {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            text-align: right;
+            opacity: 0.8;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
             font-size: 0.9rem;
-            float: right;
-            margin-top: -10px;
+            line-height: 1.5;
+            margin: 10px 0;
         }
 
-        .copy-btn:hover {
-            background: #218838;
-        }
-
-        /* 로딩 스피너 */
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
+        .loading {
             display: inline-block;
-            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
@@ -478,1168 +340,934 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 반응형 */
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-
-            .header h1 {
-                font-size: 1.8rem;
-            }
-
-            .api-section {
-                padding: 20px;
-            }
-
-            .params-table {
-                font-size: 0.9rem;
-            }
-
-            .params-table th,
-            .params-table td {
-                padding: 10px;
-            }
+        .hidden {
+            display: none;
         }
 
-        /* 목차 */
-        .toc {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .toc h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-        }
-
-        .toc-list {
-            list-style: none;
-        }
-
-        .toc-list li {
+        .description {
+            color: #666;
+            line-height: 1.6;
             margin: 15px 0;
         }
 
-        .toc-list a {
-            color: #333;
-            text-decoration: none;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px 15px;
-            border-radius: 8px;
-            transition: all 0.3s;
+        .feature-list {
+            margin: 15px 0;
+            padding-left: 0;
+            list-style: none;
         }
 
-        .toc-list a:hover {
-            background: #f0f4ff;
-            color: #667eea;
-            transform: translateX(5px);
+        .feature-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
         }
 
-        .toc-icon {
-            width: 35px;
-            height: 35px;
-            background: #667eea;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
             font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .api-section {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 헤더 -->
-        <div class="header">
-            <h1>📚 Diary Backend API 정의서</h1>
-            <p class="subtitle">TalkDiary 앱을 위한 백엔드 API 완전 가이드</p>
-            
-            <div class="base-url">
-                <strong>🌐 Base URL:</strong>
-                <code>https://diary-backend-beta.vercel.app</code>
-            </div>
-
-            <div class="alert alert-info" style="text-align: left; margin-top: 20px;">
-                <strong>📖 이 문서는 무엇인가요?</strong><br>
-                이 페이지는 개발 지식이 없는 분들도 쉽게 API를 이해하고 테스트할 수 있도록 만들어졌습니다.<br>
-                각 API마다 <strong>설명</strong>, <strong>사용법</strong>, <strong>예제</strong>, <strong>실제 테스트</strong> 기능을 제공합니다.
-            </div>
-        </div>
-
-        <!-- 목차 -->
-        <div class="toc">
-            <h2>📑 API 목록</h2>
-            <ul class="toc-list">
-                <li>
-                    <a href="#api-1">
-                        <span class="toc-icon">1</span>
-                        <div>
-                            <strong>일기 정리 API</strong><br>
-                            <small>음성 전사 텍스트를 구조화된 일기로 변환</small>
-                        </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="#api-2">
-                        <span class="toc-icon">2</span>
-                        <div>
-                            <strong>음성 전사 API (Whisper)</strong><br>
-                            <small>녹음 파일을 텍스트로 변환</small>
-                        </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="#api-3">
-                        <span class="toc-icon">3</span>
-                        <div>
-                            <strong>텍스트 음성 합성 API (TTS)</strong><br>
-                            <small>텍스트를 음성 파일로 변환</small>
-                        </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="#api-4">
-                        <span class="toc-icon">4</span>
-                        <div>
-                            <strong>대화 컨텍스트 추출 API</strong><br>
-                            <small>대화 내용에서 주요 정보 분석</small>
-                        </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="#api-5">
-                        <span class="toc-icon">5</span>
-                        <div>
-                            <strong>실시간 음성 대화 토큰 발급 API</strong><br>
-                            <small>WebRTC 실시간 대화를 위한 보안 토큰 생성</small>
-                        </div>
-                    </a>
-                </li>
-                <li>
-                    <a href="#api-6">
-                        <span class="toc-icon">6</span>
-                        <div>
-                            <strong>실시간 대화 세션 종료 API</strong><br>
-                            <small>대화 세션 사용량 기록</small>
-                        </div>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- API 1: 일기 정리 -->
-        <div class="api-section" id="api-1">
-            <div class="api-header">
-                <div class="api-title">
-                    <div class="api-number">1</div>
-                    <h2>일기 정리 API</h2>
-                </div>
-                <p class="api-description">음성으로 녹음한 일기를 AI가 정리해서 구조화된 형태로 만들어줍니다</p>
-            </div>
-
-            <div class="endpoint-box">
-                <span class="method method-post">POST</span>
-                <span class="endpoint-url">https://diary-backend-beta.vercel.app/api/organize-diary</span>
-            </div>
-
-            <div class="info-section">
-                <h3>📝 무엇을 하나요?</h3>
-                <p>
-                    사용자가 말한 내용(텍스트)을 받아서 AI가 다음과 같이 정리해줍니다:
-                </p>
-                <ul style="margin-left: 30px; margin-top: 10px;">
-                    <li>✅ <strong>오늘의 한줄</strong>: 하루를 한 문장으로 요약</li>
-                    <li>✅ <strong>주요 일상</strong>: 오늘 한 일들 (최대 3개)</li>
-                    <li>✅ <strong>목표 추적</strong>: 목표와 관련된 활동 (최대 3개)</li>
-                    <li>✅ <strong>감사한 일</strong>: 감사했던 순간들 (최대 3개)</li>
-                    <li>✅ <strong>주요 감정</strong>: 오늘 느낀 감정들 (최대 3개)</li>
-                    <li>✅ <strong>전체 일기</strong>: 자연스럽게 정리된 일기 전문</li>
-                </ul>
-            </div>
-
-            <div class="info-section">
-                <h3>📥 보내야 할 데이터</h3>
-                <table class="params-table">
-                    <thead>
-                        <tr>
-                            <th>파라미터</th>
-                            <th>필수/선택</th>
-                            <th>타입</th>
-                            <th>설명</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>text</strong></td>
-                            <td><span class="badge badge-required">필수</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>정리할 일기 내용 (음성 전사된 텍스트)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>llmProvider</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>AI 모델 선택: "openai" (기본값) 또는 "onpremise"</td>
-                        </tr>
-                        <tr>
-                            <td><strong>customPrompt</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>AI에게 줄 커스텀 지시사항</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="info-section">
-                <h3>📤 받을 수 있는 응답</h3>
-                <h4 style="color: #28a745; margin: 15px 0 10px 0;">✅ 성공 시 (200 OK)</h4>
-                <div class="code-block"><pre>{
-  "success": true,
-  "summary": {
-    "oneLiner": "친구들과 즐거운 하루를 보냈다",
-    "dailyHighlights": [
-      "친구들과 카페 방문",
-      "새로운 카페 발견",
-      "맛있는 디저트"
-    ],
-    "goalTracking": [
-      "외출 목표 달성",
-      "새로운 장소 탐험"
-    ],
-    "gratitude": [
-      "친구들과의 시간",
-      "좋은 날씨"
-    ],
-    "emotions": [
-      "즐거움",
-      "행복함"
-    ],
-    "fullDiary": "오늘은 친구들과 함께 새로운 카페를 방문했다. 날씨도 좋고 분위기도 너무 좋았다. 맛있는 디저트도 먹고 즐거운 시간을 보냈다."
-  },
-  "originalTextLength": 150,
-  "tokensUsed": 450,
-  "llmProvider": "openai",
-  "model": "gpt-4o"
-}</pre></div>
-
-                <h4 style="color: #dc3545; margin: 25px 0 10px 0;">❌ 실패 시 (400/500)</h4>
-                <div class="code-block"><pre>{
-  "success": false,
-  "error": "text 필드가 필요합니다 (음성 전사된 텍스트)",
-  "example": {
-    "text": "오늘은 아침 일찍 일어나서 운동을 했어요..."
-  }
-}</pre></div>
-            </div>
-
-            <div class="example-section">
-                <h4>💡 사용 예시</h4>
-                <p><strong>상황:</strong> 사용자가 "오늘 아침에 운동하고 회사 갔다가 저녁에 친구 만났어"라고 말함</p>
-                <p><strong>결과:</strong> AI가 이를 구조화된 일기로 정리해줌</p>
-            </div>
-
-            <!-- 테스트 섹션 -->
-            <div class="test-section">
-                <h3>🧪 직접 테스트해보기</h3>
-                <form id="test-form-1" onsubmit="testAPI1(event)">
-                    <div class="form-group">
-                        <label>📝 일기 내용 (필수)</label>
-                        <textarea id="text-1" placeholder="예: 오늘 아침에 일찍 일어나서 운동을 했어요. 날씨가 정말 좋았고 기분이 상쾌했어요. 회사에서는 새로운 프로젝트를 시작했는데 팀원들이 도와줘서 감사했어요." required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>🤖 AI 모델 선택</label>
-                        <select id="llm-provider-1">
-                            <option value="openai">OpenAI GPT-4o (권장)</option>
-                            <option value="onpremise">온프레미스 LLM</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn">🚀 API 테스트하기</button>
-                </form>
-                <div id="result-1"></div>
-            </div>
-        </div>
-
-        <!-- API 2: 음성 전사 -->
-        <div class="api-section" id="api-2">
-            <div class="api-header">
-                <div class="api-title">
-                    <div class="api-number">2</div>
-                    <h2>음성 전사 API (Whisper)</h2>
-                </div>
-                <p class="api-description">녹음된 음성 파일을 텍스트로 자동 변환합니다</p>
-            </div>
-
-            <div class="endpoint-box">
-                <span class="method method-post">POST</span>
-                <span class="endpoint-url">https://diary-backend-beta.vercel.app/api/audio/transcribe</span>
-            </div>
-
-            <div class="info-section">
-                <h3>📝 무엇을 하나요?</h3>
-                <p>
-                    음성 녹음 파일을 받아서 AI가 말한 내용을 글자로 옮겨줍니다 (Speech-to-Text).<br>
-                    한국어에 최적화되어 있으며, 일기 관련 단어들을 정확하게 인식합니다.
-                </p>
-            </div>
-
-            <div class="alert alert-warning">
-                <strong>⚠️ 주의사항</strong><br>
-                • 파일 크기: 최대 10MB<br>
-                • 지원 형식: mp4, mp3, wav, m4a, webm<br>
-                • 언어: 한국어로 고정되어 있습니다
-            </div>
-
-            <div class="info-section">
-                <h3>📥 보내야 할 데이터</h3>
-                <table class="params-table">
-                    <thead>
-                        <tr>
-                            <th>파라미터</th>
-                            <th>필수/선택</th>
-                            <th>타입</th>
-                            <th>설명</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>file</strong></td>
-                            <td><span class="badge badge-required">필수</span></td>
-                            <td><span class="badge badge-string">파일</span></td>
-                            <td>음성 녹음 파일 (multipart/form-data 형식)</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="info-section">
-                <h3>📤 받을 수 있는 응답</h3>
-                <h4 style="color: #28a745; margin: 15px 0 10px 0;">✅ 성공 시 (200 OK)</h4>
-                <div class="code-block"><pre>{
-  "success": true,
-  "text": "오늘 아침에 일찍 일어나서 운동을 했어요. 날씨가 정말 좋았습니다.",
-  "language": "ko",
-  "duration": 15.2
-}</pre></div>
-
-                <h4 style="color: #dc3545; margin: 25px 0 10px 0;">❌ 실패 시</h4>
-                <div class="code-block"><pre>{
-  "success": false,
-  "error": "file 필드가 필요합니다 (오디오 파일)",
-  "example": {
-    "description": "multipart/form-data로 file 필드에 오디오 파일 전송",
-    "supportedFormats": "mp4, mp3, wav, m4a, webm (최대 10MB)"
-  }
-}</pre></div>
-            </div>
-
-            <!-- 테스트 섹션 -->
-            <div class="test-section">
-                <h3>🧪 직접 테스트해보기</h3>
-                <form id="test-form-2" onsubmit="testAPI2(event)">
-                    <div class="form-group">
-                        <label>🎤 음성 파일 선택 (필수)</label>
-                        <input type="file" id="audio-file-2" accept="audio/*,.m4a" required>
-                        <small style="color: #666; display: block; margin-top: 5px;">
-                            mp4, mp3, wav, m4a, webm 형식 지원 (최대 10MB)
-                        </small>
-                    </div>
-                    <button type="submit" class="btn">🚀 API 테스트하기</button>
-                </form>
-                <div id="result-2"></div>
-            </div>
-        </div>
-
-        <!-- API 3: TTS -->
-        <div class="api-section" id="api-3">
-            <div class="api-header">
-                <div class="api-title">
-                    <div class="api-number">3</div>
-                    <h2>텍스트 음성 합성 API (TTS)</h2>
-                </div>
-                <p class="api-description">텍스트를 자연스러운 음성으로 변환합니다</p>
-            </div>
-
-            <div class="endpoint-box">
-                <span class="method method-post">POST</span>
-                <span class="endpoint-url">https://diary-backend-beta.vercel.app/api/audio/speech</span>
-            </div>
-
-            <div class="info-section">
-                <h3>📝 무엇을 하나요?</h3>
-                <p>
-                    글자로 된 텍스트를 받아서 AI가 사람 목소리로 읽어줍니다 (Text-to-Speech).<br>
-                    다양한 목소리 중에서 선택할 수 있습니다.
-                </p>
-            </div>
-
-            <div class="info-section">
-                <h3>📥 보내야 할 데이터</h3>
-                <table class="params-table">
-                    <thead>
-                        <tr>
-                            <th>파라미터</th>
-                            <th>필수/선택</th>
-                            <th>타입</th>
-                            <th>설명</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>text</strong></td>
-                            <td><span class="badge badge-required">필수</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>음성으로 변환할 텍스트</td>
-                        </tr>
-                        <tr>
-                            <td><strong>voice</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>목소리 선택: alloy, echo, shimmer, ash, ballad, coral, sage, verse (기본값: alloy)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>instructions</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>음성 톤 지시 (예: "친근하고 밝은 톤으로")</td>
-                        </tr>
-                        <tr>
-                            <td><strong>response_format</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>파일 형식: mp3 (기본값), opus, aac, flac, wav, pcm</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="info-section">
-                <h3>🎵 사용 가능한 목소리</h3>
-                <ul style="margin-left: 30px;">
-                    <li><strong>alloy</strong>: 중성적이고 균형잡힌 목소리</li>
-                    <li><strong>echo</strong>: 남성적이고 깊은 목소리</li>
-                    <li><strong>shimmer</strong>: 여성적이고 부드러운 목소리</li>
-                    <li><strong>ash</strong>: 차분하고 안정적인 목소리</li>
-                    <li><strong>ballad</strong>: 서정적이고 감성적인 목소리</li>
-                    <li><strong>coral</strong>: 밝고 활기찬 목소리</li>
-                    <li><strong>sage</strong>: 지적이고 성숙한 목소리</li>
-                    <li><strong>verse</strong>: 율동감 있는 목소리</li>
-                </ul>
-            </div>
-
-            <div class="info-section">
-                <h3>📤 받을 수 있는 응답</h3>
-                <h4 style="color: #28a745; margin: 15px 0 10px 0;">✅ 성공 시 (200 OK)</h4>
-                <p>MP3 오디오 파일 (바이너리 데이터)</p>
-                <div class="alert alert-info">
-                    브라우저에서 직접 재생하거나 다운로드할 수 있습니다.
-                </div>
-            </div>
-
-            <!-- 테스트 섹션 -->
-            <div class="test-section">
-                <h3>🧪 직접 테스트해보기</h3>
-                <form id="test-form-3" onsubmit="testAPI3(event)">
-                    <div class="form-group">
-                        <label>📝 변환할 텍스트 (필수)</label>
-                        <textarea id="text-3" placeholder="예: 안녕하세요, 오늘도 좋은 하루 되세요!" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>🎤 목소리 선택</label>
-                        <select id="voice-3">
-                            <option value="alloy">alloy (중성적)</option>
-                            <option value="echo">echo (남성적)</option>
-                            <option value="shimmer">shimmer (여성적)</option>
-                            <option value="ash">ash (차분한)</option>
-                            <option value="ballad">ballad (감성적)</option>
-                            <option value="coral">coral (밝은)</option>
-                            <option value="sage">sage (성숙한)</option>
-                            <option value="verse">verse (율동적)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>💬 음성 톤 지시 (선택)</label>
-                        <input type="text" id="instructions-3" placeholder="예: 친근하고 밝은 톤으로 말해주세요">
-                    </div>
-                    <button type="submit" class="btn">🚀 API 테스트하기 (음성 생성)</button>
-                </form>
-                <div id="result-3"></div>
-            </div>
-        </div>
-
-        <!-- API 4: 컨텍스트 추출 -->
-        <div class="api-section" id="api-4">
-            <div class="api-header">
-                <div class="api-title">
-                    <div class="api-number">4</div>
-                    <h2>대화 컨텍스트 추출 API</h2>
-                </div>
-                <p class="api-description">대화 내용에서 핵심 정보를 자동으로 분석합니다</p>
-            </div>
-
-            <div class="endpoint-box">
-                <span class="method method-post">POST</span>
-                <span class="endpoint-url">https://diary-backend-beta.vercel.app/api/context/extract</span>
-            </div>
-
-            <div class="info-section">
-                <h3>📝 무엇을 하나요?</h3>
-                <p>
-                    긴 대화 내용을 받아서 AI가 다음과 같은 정보를 추출해줍니다:
-                </p>
-                <ul style="margin-left: 30px; margin-top: 10px;">
-                    <li>🎯 대화의 주요 주제</li>
-                    <li>💡 사용자의 의도나 목적</li>
-                    <li>🔑 중요한 정보나 키워드</li>
-                    <li>😊 감정 상태나 톤</li>
-                    <li>📊 대화의 흐름 요약</li>
-                </ul>
-            </div>
-
-            <div class="info-section">
-                <h3>📥 보내야 할 데이터</h3>
-                <table class="params-table">
-                    <thead>
-                        <tr>
-                            <th>파라미터</th>
-                            <th>필수/선택</th>
-                            <th>타입</th>
-                            <th>설명</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>conversationText</strong></td>
-                            <td><span class="badge badge-required">필수</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>분석할 대화 내용 (예: "사용자: 안녕?\nAI: 반갑습니다!")</td>
-                        </tr>
-                        <tr>
-                            <td><strong>llmProvider</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>AI 모델: "openai" (기본값) 또는 "onpremise"</td>
-                        </tr>
-                        <tr>
-                            <td><strong>customPrompt</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>커스텀 분석 지시사항</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="info-section">
-                <h3>📤 받을 수 있는 응답</h3>
-                <h4 style="color: #28a745; margin: 15px 0 10px 0;">✅ 성공 시 (200 OK)</h4>
-                <div class="code-block"><pre>{
-  "success": true,
-  "context": "• 주요 주제: 일상 대화 및 안부 인사\n• 사용자 의도: 봇과의 대화 시작\n• 주요 키워드: 안녕, 반갑다\n• 감정 톤: 친근하고 긍정적\n• 흐름 요약: 사용자가 인사를 건네고 AI가 환영하는 짧은 교환",
-  "conversationLength": 50,
-  "tokensUsed": 120,
-  "llmProvider": "openai",
-  "model": "gpt-4o"
-}</pre></div>
-            </div>
-
-            <div class="example-section">
-                <h4>💡 사용 예시</h4>
-                <p><strong>입력:</strong></p>
-                <div class="code-block"><pre>사용자: 오늘 회사에서 프로젝트 발표했어
-AI: 오 발표 어떠셨어요?
-사용자: 떨렸지만 잘 끝났어. 팀장님이 칭찬해주셨어
-AI: 대단하시네요! 축하드려요</pre></div>
-                <p><strong>출력:</strong> 업무 성과, 발표 성공, 긍정적 피드백 등의 핵심 정보 추출</p>
-            </div>
-
-            <!-- 테스트 섹션 -->
-            <div class="test-section">
-                <h3>🧪 직접 테스트해보기</h3>
-                <form id="test-form-4" onsubmit="testAPI4(event)">
-                    <div class="form-group">
-                        <label>💬 대화 내용 (필수)</label>
-                        <textarea id="conversation-4" placeholder="예:&#10;사용자: 오늘 정말 힘든 하루였어&#10;AI: 무슨 일이 있으셨나요?&#10;사용자: 업무가 너무 많아서 야근했어&#10;AI: 고생 많으셨네요. 푹 쉬세요" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>🤖 AI 모델 선택</label>
-                        <select id="llm-provider-4">
-                            <option value="openai">OpenAI GPT-4o (권장)</option>
-                            <option value="onpremise">온프레미스 LLM</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn">🚀 API 테스트하기</button>
-                </form>
-                <div id="result-4"></div>
-            </div>
-        </div>
-
-        <!-- API 5: Realtime 토큰 -->
-        <div class="api-section" id="api-5">
-            <div class="api-header">
-                <div class="api-title">
-                    <div class="api-number">5</div>
-                    <h2>실시간 음성 대화 토큰 발급 API</h2>
-                </div>
-                <p class="api-description">WebRTC 실시간 음성 대화를 위한 보안 토큰을 생성합니다</p>
-            </div>
-
-            <div class="endpoint-box">
-                <span class="method method-post">POST</span>
-                <span class="endpoint-url">https://diary-backend-beta.vercel.app/api/realtime/token</span>
-            </div>
-
-            <div class="info-section">
-                <h3>📝 무엇을 하나요?</h3>
-                <p>
-                    사용자가 AI와 실시간으로 음성 대화를 하려면 보안 토큰이 필요합니다.<br>
-                    이 API는 30분 동안 유효한 일회용 토큰을 발급해줍니다.
-                </p>
-                <div class="alert alert-info" style="margin-top: 15px;">
-                    <strong>🔐 보안 정보</strong><br>
-                    토큰은 30분 후 자동으로 만료되며, 한 번 발급받으면 여러 세션에서 재사용할 수 있습니다.
-                </div>
-            </div>
-
-            <div class="info-section">
-                <h3>📥 보내야 할 데이터</h3>
-                <table class="params-table">
-                    <thead>
-                        <tr>
-                            <th>파라미터</th>
-                            <th>필수/선택</th>
-                            <th>타입</th>
-                            <th>설명</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>userId</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>사용자 식별 ID (추적용)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>sessionConfig</strong></td>
-                            <td><span class="badge badge-required">필수</span></td>
-                            <td><span class="badge badge-object">객체</span></td>
-                            <td>세션 설정 정보</td>
-                        </tr>
-                        <tr>
-                            <td>&nbsp;&nbsp;↳ <strong>model</strong></td>
-                            <td><span class="badge badge-required">필수</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>AI 모델: "gpt-4o-realtime-preview-2024-12-17" 또는 "gpt-4o-mini-realtime-preview"</td>
-                        </tr>
-                        <tr>
-                            <td>&nbsp;&nbsp;↳ <strong>voice</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>목소리: alloy, echo, shimmer 등 (기본값: alloy)</td>
-                        </tr>
-                        <tr>
-                            <td>&nbsp;&nbsp;↳ <strong>instructions</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>AI에게 줄 지시사항 (예: "친근한 일기 도우미처럼 대화해줘")</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="info-section">
-                <h3>📤 받을 수 있는 응답</h3>
-                <h4 style="color: #28a745; margin: 15px 0 10px 0;">✅ 성공 시 (200 OK)</h4>
-                <div class="code-block"><pre>{
-  "success": true,
-  "token": "ek_68af296e8e408191a1120ab6383263c2",
-  "sessionId": "sess_C9CiUVUzUzYIssh3ELY1d",
-  "expiresAt": 1756310470,
-  "config": {
-    "model": "gpt-4o-realtime-preview-2024-12-17",
-    "voice": "alloy"
-  }
-}</pre></div>
-                <div class="alert alert-warning" style="margin-top: 15px;">
-                    <strong>⚠️ 중요</strong><br>
-                    받은 <code>token</code>을 안전하게 보관하고, WebRTC 연결 시 사용하세요.<br>
-                    <code>expiresAt</code>은 Unix timestamp 형식입니다.
-                </div>
-            </div>
-
-            <!-- 테스트 섹션 -->
-            <div class="test-section">
-                <h3>🧪 직접 테스트해보기</h3>
-                <form id="test-form-5" onsubmit="testAPI5(event)">
-                    <div class="form-group">
-                        <label>👤 사용자 ID (선택)</label>
-                        <input type="text" id="user-id-5" placeholder="예: user_12345">
-                    </div>
-                    <div class="form-group">
-                        <label>🤖 AI 모델 선택 (필수)</label>
-                        <select id="model-5" required>
-                            <option value="gpt-4o-realtime-preview-2024-12-17">GPT-4o Realtime (권장)</option>
-                            <option value="gpt-4o-mini-realtime-preview">GPT-4o Mini Realtime</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>🎤 목소리 선택</label>
-                        <select id="voice-5">
-                            <option value="alloy">alloy</option>
-                            <option value="echo">echo</option>
-                            <option value="shimmer">shimmer</option>
-                            <option value="ash">ash</option>
-                            <option value="ballad">ballad</option>
-                            <option value="coral">coral</option>
-                            <option value="sage">sage</option>
-                            <option value="verse">verse</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>💬 AI 지시사항 (선택)</label>
-                        <input type="text" id="instructions-5" placeholder="예: 당신은 친근한 일기 작성 도우미입니다">
-                    </div>
-                    <button type="submit" class="btn">🚀 토큰 발급하기</button>
-                </form>
-                <div id="result-5"></div>
-            </div>
-        </div>
-
-        <!-- API 6: 세션 종료 -->
-        <div class="api-section" id="api-6">
-            <div class="api-header">
-                <div class="api-title">
-                    <div class="api-number">6</div>
-                    <h2>실시간 대화 세션 종료 API</h2>
-                </div>
-                <p class="api-description">실시간 음성 대화가 끝났을 때 사용량을 기록합니다</p>
-            </div>
-
-            <div class="endpoint-box">
-                <span class="method method-post">POST</span>
-                <span class="endpoint-url">https://diary-backend-beta.vercel.app/api/realtime/end</span>
-            </div>
-
-            <div class="info-section">
-                <h3>📝 무엇을 하나요?</h3>
-                <p>
-                    실시간 음성 대화가 종료되면 다음 정보를 서버에 기록합니다:
-                </p>
-                <ul style="margin-left: 30px; margin-top: 10px;">
-                    <li>📊 통화 시간 (몇 초 동안 대화했는지)</li>
-                    <li>💬 주고받은 메시지 수</li>
-                    <li>🔚 종료 사유 (사용자가 끊음, 시간 초과, 에러 등)</li>
-                </ul>
-                <p style="margin-top: 15px;">
-                    이 정보는 향후 사용량 분석과 비용 관리에 활용됩니다.
-                </p>
-            </div>
-
-            <div class="info-section">
-                <h3>📥 보내야 할 데이터</h3>
-                <table class="params-table">
-                    <thead>
-                        <tr>
-                            <th>파라미터</th>
-                            <th>필수/선택</th>
-                            <th>타입</th>
-                            <th>설명</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>sessionId</strong></td>
-                            <td><span class="badge badge-required">필수</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>토큰 발급 시 받은 세션 ID</td>
-                        </tr>
-                        <tr>
-                            <td><strong>duration</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-number">숫자</span></td>
-                            <td>통화 시간 (초 단위)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>messageCount</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-number">숫자</span></td>
-                            <td>주고받은 메시지 수</td>
-                        </tr>
-                        <tr>
-                            <td><strong>endedBy</strong></td>
-                            <td><span class="badge badge-optional">선택</span></td>
-                            <td><span class="badge badge-string">문자열</span></td>
-                            <td>종료 사유: "user" (사용자), "timeout" (시간초과), "error" (에러)</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="info-section">
-                <h3>📤 받을 수 있는 응답</h3>
-                <h4 style="color: #28a745; margin: 15px 0 10px 0;">✅ 성공 시 (200 OK)</h4>
-                <div class="code-block"><pre>{
-  "success": true,
-  "message": "Session ended and logged successfully",
-  "sessionData": {
-    "sessionId": "sess_C9CiUVUzUzYIssh3ELY1d",
-    "duration": 320,
-    "messageCount": 15,
-    "endedBy": "user"
-  }
-}</pre></div>
-            </div>
-
-            <div class="example-section">
-                <h4>💡 사용 예시</h4>
-                <p><strong>상황:</strong> 사용자가 AI와 5분 20초 동안 대화 후 종료</p>
-                <p><strong>보낼 데이터:</strong> duration = 320초, messageCount = 15, endedBy = "user"</p>
-            </div>
-
-            <!-- 테스트 섹션 -->
-            <div class="test-section">
-                <h3>🧪 직접 테스트해보기</h3>
-                <form id="test-form-6" onsubmit="testAPI6(event)">
-                    <div class="form-group">
-                        <label>🆔 세션 ID (필수)</label>
-                        <input type="text" id="session-id-6" placeholder="예: sess_C9CiUVUzUzYIssh3ELY1d" required>
-                        <small style="color: #666; display: block; margin-top: 5px;">
-                            API 5번(토큰 발급)에서 받은 sessionId를 입력하세요
-                        </small>
-                    </div>
-                    <div class="form-group">
-                        <label>⏱️ 통화 시간 (초)</label>
-                        <input type="number" id="duration-6" placeholder="예: 320" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>💬 메시지 수</label>
-                        <input type="number" id="message-count-6" placeholder="예: 15" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>🔚 종료 사유</label>
-                        <select id="ended-by-6">
-                            <option value="user">user (사용자가 종료)</option>
-                            <option value="timeout">timeout (시간 초과)</option>
-                            <option value="error">error (에러 발생)</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn">🚀 세션 종료 기록하기</button>
-                </form>
-                <div id="result-6"></div>
-            </div>
-        </div>
-
-        <!-- 하단 정보 -->
-        <div class="api-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <h2 style="color: white; margin-bottom: 20px;">📚 추가 정보</h2>
-            
-            <h3 style="color: white; margin-top: 30px; margin-bottom: 15px;">🔐 보안</h3>
-            <p>
-                모든 API는 HTTPS로 암호화되어 있으며, API 키는 서버에서만 관리됩니다.<br>
-                클라이언트(앱)에서는 API 키를 전혀 알 필요가 없습니다.
-            </p>
-
-            <h3 style="color: white; margin-top: 30px; margin-bottom: 15px;">⚡ 성능</h3>
-            <p>
-                모든 API는 Vercel Serverless 환경에서 실행되어 빠른 응답 속도를 제공합니다.<br>
-                평균 응답 시간: 일기 정리 2-5초, 음성 전사 3-8초, TTS 1-3초
-            </p>
-
-            <h3 style="color: white; margin-top: 30px; margin-bottom: 15px;">💰 비용</h3>
-            <p>
-                OpenAI API 사용량에 따라 과금됩니다.<br>
-                • GPT-4o: 약 $0.005/요청<br>
-                • Whisper: 약 $0.006/분<br>
-                • TTS: 약 $0.015/1,000자<br>
-                • Realtime: 약 $0.06/분
-            </p>
-
-            <h3 style="color: white; margin-top: 30px; margin-bottom: 15px;">📞 문의</h3>
-            <p>
-                API 사용 중 문제가 발생하면 개발팀에 문의하세요.<br>
-                GitHub: <a href="https://github.com/yourusername/diary-backend" style="color: #fff; text-decoration: underline;">diary-backend</a>
-            </p>
-
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3); text-align: center;">
-                <p style="font-size: 0.9rem; opacity: 0.8;">
-                    © 2025 TalkDiary Backend API v1.0.0<br>
-                    Last Updated: 2025-01-17
-                </p>
-            </div>
+    <!-- 최상단 탭 네비게이션 -->
+    <div class="top-nav">
+        <div class="main-tabs">
+            <button class="main-tab active" onclick="switchMainTab('api-test')">
+                🧪 API 테스트
+            </button>
+            <button class="main-tab" onclick="switchMainTab('prompt-playground')">
+                🎨 프롬프트 플레이그라운드
+            </button>
+            <button class="main-tab" onclick="switchMainTab('webrtc-test')">
+                🌐 WebRTC 테스트
+            </button>
         </div>
     </div>
 
+    <!-- API 테스트 탭 컨텐츠 -->
+    <div id="main-tab-api-test" class="main-tab-content active">
+    <div class="container">
+        <div class="header">
+            <h1>📔 Diary Backend API</h1>
+            <p>음성 일기 정리 API 테스트</p>
+            <div class="api-url">https://diary-backend-beta.vercel.app</div>
+        </div>
+        <div class="content">
+            <!-- 1. Organize Diary API 섹션 -->
+            <div class="api-section">
+                <h3>✨ 일기 정리 API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/organize-diary</span>
+                </div>
+                <p class="description">
+                    음성 전사 텍스트를 받아서 구조화된 일기로 자동 변환합니다.
+                    OpenAI GPT-4o를 사용하여 하루의 일상, 목표, 감사한 일, 감정 등을 분석하고 정리합니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="diary-text">💬 음성 전사 텍스트 입력:</label>
+                    <textarea 
+                        id="diary-text" 
+                        placeholder="오늘 있었던 일들을 자유롭게 입력해주세요...&#10;&#10;예: 오늘은 아침 일찍 일어나서 30분 조깅을 했어요. 날씨가 너무 좋아서 기분이 상쾌했습니다..."
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="diary-llm-provider">🤖 LLM 프로바이더 선택:</label>
+                    <select id="diary-llm-provider" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="openai">OpenAI (gpt-4o)</option>
+                        <option value="onpremise">온프레미스 (LFM2-2.6B)</option>
+                    </select>
+                </div>
+
+                <div class="sample-buttons">
+                    <strong style="display: block; margin-bottom: 10px; color: #555;">샘플 데이터:</strong>
+                    <button class="btn-small" onclick="loadSample(1)">📝 샘플 1: 일상 이야기</button>
+                    <button class="btn-small" onclick="loadSample(2)">💪 샘플 2: 운동 일기</button>
+                    <button class="btn-small" onclick="loadSample(3)">😊 샘플 3: 짧은 일기</button>
+                    <button class="btn-small" onclick="clearText()">🗑️ 지우기</button>
+                </div>
+
+                <button class="btn" onclick="organizeDiary()">
+                    <span>일기 정리하기</span>
+                    <span class="loading hidden" id="organize-loading"></span>
+                </button>
+
+                <div class="response hidden" id="organize-response"></div>
+            </div>
+
+            <!-- 2. 음성 전사 (STT) API 섹션 -->
+            <div class="api-section">
+                <h3>🎙️ 음성 전사 (STT) API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/audio/transcribe</span>
+                </div>
+                <p class="description">
+                    오디오 파일을 텍스트로 변환합니다. OpenAI Whisper (gpt-4o-transcribe)를 사용하여
+                    한국어 음성을 정확하게 전사합니다. 일기 작성을 위한 음성 녹음 파일 처리에 최적화되어 있습니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="audio-file">🎵 오디오 파일 선택:</label>
+                    <input type="file" id="audio-file" accept="audio/*" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;">
+                    <small style="display: block; margin-top: 8px; color: #666;">
+                        지원 형식: mp4, mp3, wav, m4a, webm (최대 10MB)
+                    </small>
+                </div>
+
+                <button class="btn" onclick="transcribeAudio()">
+                    <span>음성 전사하기</span>
+                    <span class="loading hidden" id="transcribe-loading"></span>
+                </button>
+
+                <div class="response hidden" id="transcribe-response"></div>
+            </div>
+
+            <!-- 3. 음성 합성 (TTS) API 섹션 -->
+            <div class="api-section">
+                <h3>🔊 음성 합성 (TTS) API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/audio/speech</span>
+                </div>
+                <p class="description">
+                    텍스트를 자연스러운 음성으로 변환합니다. OpenAI TTS (gpt-4o-mini-tts)를 사용하여
+                    한국어 음성을 생성합니다. 환영 메시지나 알림 음성 생성에 사용됩니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="tts-text">💬 음성으로 변환할 텍스트:</label>
+                    <textarea 
+                        id="tts-text" 
+                        placeholder="안녕하세요! 만나서 반갑습니다."
+                        style="min-height: 80px;"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="tts-voice">🎤 음성 선택:</label>
+                    <select id="tts-voice" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="alloy">Alloy (중성적)</option>
+                        <option value="echo">Echo (남성)</option>
+                        <option value="fable">Fable (영국 남성)</option>
+                        <option value="onyx">Onyx (깊은 남성)</option>
+                        <option value="nova">Nova (여성)</option>
+                        <option value="shimmer">Shimmer (밝은 여성)</option>
+                    </select>
+                </div>
+
+                <button class="btn" onclick="generateSpeech()">
+                    <span>음성 생성하기</span>
+                    <span class="loading hidden" id="tts-loading"></span>
+                </button>
+
+                <div class="response hidden" id="tts-response"></div>
+            </div>
+
+            <!-- 4. 대화 컨텍스트 추출 API 섹션 -->
+            <div class="api-section">
+                <h3>🧠 대화 컨텍스트 추출 API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/context/extract</span>
+                </div>
+                <p class="description">
+                    대화 내용을 분석하여 주요 컨텍스트를 추출합니다. 주제, 의도, 키워드, 감정, 흐름을 
+                    GPT-4o로 분석하여 간결하게 정리합니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="context-conversation">💬 대화 내용:</label>
+                    <textarea 
+                        id="context-conversation" 
+                        placeholder="사용자: 오늘 운동을 했어요&#10;AI: 좋은 습관이네요! 어떤 운동을 하셨나요?&#10;사용자: 조깅 30분 했습니다"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="context-llm-provider">🤖 LLM 프로바이더 선택:</label>
+                    <select id="context-llm-provider" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="openai">OpenAI (gpt-4o)</option>
+                        <option value="onpremise">온프레미스 (LFM2-2.6B)</option>
+                    </select>
+                </div>
+
+                <button class="btn" onclick="extractContext()">
+                    <span>컨텍스트 추출하기</span>
+                    <span class="loading hidden" id="context-loading"></span>
+                </button>
+
+                <div class="response hidden" id="context-response"></div>
+            </div>
+
+            <!-- 5. Realtime Token 발급 API 섹션 -->
+            <div class="api-section">
+                <h3>🎙️ Realtime Token 발급 API</h3>
+                <div class="api-info">
+                    <span class="method post">POST</span>
+                    <span>/api/realtime/token</span>
+                </div>
+                <p class="description">
+                    React Native 앱에서 사용할 Ephemeral Token을 발급합니다. 
+                    이 토큰은 30분간 유효하며 클라이언트에서 OpenAI Realtime API에 직접 연결할 때 사용됩니다.
+                    <strong>보안:</strong> API 키를 앱에 노출하지 않고 안전하게 실시간 음성 대화를 구현할 수 있습니다.
+                </p>
+                
+                <div class="form-group">
+                    <label for="realtime-model">🤖 모델 선택:</label>
+                    <select id="realtime-model" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="gpt-4o-realtime-preview-2024-12-17">GPT-4o Realtime (2024-12-17) - 권장</option>
+                        <option value="gpt-4o-mini-realtime-preview">GPT-4o Mini Realtime</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="realtime-voice">🎤 음성 선택:</label>
+                    <select id="realtime-voice" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                        <option value="alloy">Alloy (중성적)</option>
+                        <option value="echo">Echo (남성)</option>
+                        <option value="shimmer">Shimmer (밝은 여성)</option>
+                        <option value="ash">Ash</option>
+                        <option value="ballad">Ballad</option>
+                        <option value="coral">Coral</option>
+                        <option value="sage">Sage</option>
+                        <option value="verse">Verse</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="realtime-instructions">📝 시스템 지시사항:</label>
+                    <textarea 
+                        id="realtime-instructions" 
+                        placeholder="당신은 친근한 일기 작성 도우미입니다..."
+                        style="min-height: 100px;"
+                    >당신은 친근하고 따뜻한 일기 작성 도우미입니다. 사용자의 하루 이야기를 경청하고 공감하며 대화를 이어가세요. 자연스럽게 질문하고 사용자가 더 많은 이야기를 할 수 있도록 격려해주세요.</textarea>
+                </div>
+
+                <button class="btn" onclick="createRealtimeToken()">
+                    <span>🔐 토큰 발급하기</span>
+                    <span class="loading hidden" id="realtime-token-loading"></span>
+                </button>
+
+                <div class="response hidden" id="realtime-token-response"></div>
+            </div>
+
+            <!-- 6. API 명세서 섹션 -->
+            <div class="api-section">
+                <h3>📖 API 명세서</h3>
+                
+                <h4>🔹 Request</h4>
+                <pre class="code-block">{
+  "text": "음성 전사된 텍스트"
+}</pre>
+
+                <h4>🔹 Response (성공 - 200 OK)</h4>
+                <pre class="code-block">{
+  "success": true,
+  "summary": {
+    "oneLiner": "하루를 한 문장으로 요약",
+    "dailyHighlights": ["활동1", "활동2", "활동3"],
+    "goalTracking": ["목표1", "목표2"],
+    "gratitude": ["감사1", "감사2", "감사3"],
+    "emotions": ["감정1", "감정2", "감정3"],
+    "fullDiary": "3-5문장으로 정리된 전체 일기"
+  },
+  "originalTextLength": 150,
+  "tokensUsed": 1061
+}</pre>
+
+                <h4>🔹 Response (에러 - 400/500)</h4>
+                <pre class="code-block">{
+  "success": false,
+  "error": "에러 메시지"
+}</pre>
+
+                <h4>🔹 주요 필드 설명</h4>
+                <ul class="feature-list">
+                    <li><strong>oneLiner</strong>: 오늘 하루를 한 문장으로 요약</li>
+                    <li><strong>dailyHighlights</strong>: 주요 일상 활동 (최대 3개, 2-4단어)</li>
+                    <li><strong>goalTracking</strong>: 목표 관련 활동/진전 (최대 3개)</li>
+                    <li><strong>gratitude</strong>: 감사한 일들 (최대 3개)</li>
+                    <li><strong>emotions</strong>: 주요 감정들 (최대 3개)</li>
+                    <li><strong>fullDiary</strong>: 자연스럽게 정리된 전체 일기 (3-5문장)</li>
+                </ul>
+            </div>
+
+            <!-- 3. cURL 예제 섹션 -->
+            <div class="api-section">
+                <h3>💻 cURL 명령어</h3>
+                <p class="description">터미널에서 직접 API를 테스트할 수 있습니다.</p>
+                <pre class="code-block" id="curl-command">curl -X POST https://diary-backend-beta.vercel.app/api/organize-diary \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "오늘은 아침 일찍 일어나서 운동을 했어요. 기분이 좋았습니다."
+  }'</pre>
+                <button class="btn-small" onclick="copyCurl()">📋 복사하기</button>
+            </div>
+
+            <!-- 4. React Native 연동 예제 -->
+            <div class="api-section">
+                <h3>📱 React Native 연동 예제</h3>
+                <p class="description">React Native 앱에서 이 API를 호출하는 방법입니다.</p>
+                <pre class="code-block">// VoiceRecordingModal.tsx
+
+const organizeDiary = async (transcribedText) => {
+  try {
+    const response = await fetch(
+      'https://diary-backend-beta.vercel.app/api/organize-diary',
+      {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ 
+          text: transcribedText 
+        }),
+      }
+    );
+
+    const data = await response.json();
+    
+    if (data.success) {
+      const summary = {
+        ...data.summary,
+        originalText: transcribedText,
+        date: new Date(),
+      };
+      
+      console.log('일기 정리 완료:', summary);
+      onDiarySummaryComplete(summary);
+    } else {
+      console.error('에러:', data.error);
+    }
+  } catch (error) {
+    console.error('API 호출 실패:', error);
+  }
+};</pre>
+            </div>
+
+            <!-- 5. 기술 스택 -->
+            <div class="api-section">
+                <h3>🛠️ 기술 스택</h3>
+                <ul class="feature-list">
+                    <li><strong>Backend Framework</strong>: Vercel Serverless Functions (Node.js 22.x)</li>
+                    <li><strong>AI Model</strong>: OpenAI GPT-4o</li>
+                    <li><strong>Response Format</strong>: JSON Schema (Structured Output)</li>
+                    <li><strong>Deployment</strong>: Vercel (자동 배포)</li>
+                    <li><strong>CORS</strong>: 모든 origin 허용 (React Native 호환)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- API 테스트 탭 끝 -->
+
+    <!-- 프롬프트 플레이그라운드 탭 시작 -->
+    <div id="main-tab-prompt-playground" class="main-tab-content">
+        <iframe src="/prompt-playground.html" style="width: 100%; height: 100vh; border: none;"></iframe>
+    </div>
+    <!-- 프롬프트 플레이그라운드 탭 끝 -->
+
+    <!-- WebRTC 테스트 탭 시작 -->
+    <div id="main-tab-webrtc-test" class="main-tab-content">
+        <iframe src="/webrtc-test.html" style="width: 100%; height: 100vh; border: none;"></iframe>
+    </div>
+    <!-- WebRTC 테스트 탭 끝 -->
+
     <script>
-        // API 1: 일기 정리
-        async function testAPI1(event) {
-            event.preventDefault();
-            const resultDiv = document.getElementById('result-1');
-            const text = document.getElementById('text-1').value;
-            const llmProvider = document.getElementById('llm-provider-1').value;
+        const API_BASE_URL = window.location.origin;
 
-            resultDiv.className = 'result-box result-loading';
-            resultDiv.innerHTML = '<div class="spinner"></div>API 호출 중...';
+        // 샘플 데이터
+        const samples = {
+            1: "오늘은 아침 일찍 일어나서 30분 조깅을 했어요. 날씨가 너무 좋아서 기분이 상쾌했습니다. 점심에는 팀 회의가 있었는데 새로운 프로젝트 아이디어를 발표했어요. 동료들이 긍정적으로 반응해줘서 뿌듯했습니다. 저녁에는 친구와 맛있는 저녁을 먹으면서 오랜만에 수다를 떨었어요. 정말 알찬 하루였습니다.",
+            
+            2: "오늘 드디어 운동을 시작했다! 헬스장에 등록하고 PT 첫 수업을 받았는데 생각보다 힘들었다. 하지만 트레이너님이 친절하게 가르쳐주셔서 좋았다. 스쿼트랑 벤치프레스를 배웠는데 자세가 정말 중요하다는 걸 알았다. 집에 와서 단백질 쉐이크도 만들어 마셨다. 3개월 후 목표 체중을 달성하고 싶다. 내일도 꼭 가야지!",
+            
+            3: "오늘 기분 좋았어요! 날씨도 좋고 점심도 맛있었어요."
+        };
 
-            try {
-                const response = await fetch('https://diary-backend-beta.vercel.app/api/organize-diary', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        text: text,
-                        llmProvider: llmProvider
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    resultDiv.className = 'result-box result-success';
-                    resultDiv.innerHTML = `<strong>✅ 성공!</strong>\n\n${JSON.stringify(data, null, 2)}`;
-                } else {
-                    resultDiv.className = 'result-box result-error';
-                    resultDiv.innerHTML = `<strong>❌ 실패</strong>\n\n${JSON.stringify(data, null, 2)}`;
-                }
-            } catch (error) {
-                resultDiv.className = 'result-box result-error';
-                resultDiv.innerHTML = `<strong>❌ 에러 발생</strong>\n\n${error.message}`;
-            }
+        function loadSample(num) {
+            document.getElementById('diary-text').value = samples[num];
         }
 
-        // API 2: 음성 전사
-        async function testAPI2(event) {
-            event.preventDefault();
-            const resultDiv = document.getElementById('result-2');
-            const fileInput = document.getElementById('audio-file-2');
-            const file = fileInput.files[0];
+        function clearText() {
+            document.getElementById('diary-text').value = '';
+        }
 
-            if (!file) {
-                alert('파일을 선택해주세요');
+        async function organizeDiary() {
+            const text = document.getElementById('diary-text').value.trim();
+            const llmProvider = document.getElementById('diary-llm-provider').value;
+            
+            if (!text) {
+                alert('텍스트를 입력해주세요.');
                 return;
             }
 
-            resultDiv.className = 'result-box result-loading';
-            resultDiv.innerHTML = '<div class="spinner"></div>음성 파일 전사 중... (시간이 걸릴 수 있습니다)';
+            const loadingEl = document.getElementById('organize-loading');
+            const responseEl = document.getElementById('organize-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/organize-diary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, llmProvider })
+                });
+
+                const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+
+                if (data.success) {
+                    // 성공 시 구조화된 응답 표시
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ 일기 정리 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>💬 오늘의 한줄</strong>
+                            <p>${data.summary.oneLiner}</p>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>📌 주요 일상</strong>
+                            <ul>${data.summary.dailyHighlights.length > 0 
+                                ? data.summary.dailyHighlights.map(h => `<li>${h}</li>`).join('') 
+                                : '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>🎯 목표 추적</strong>
+                            <ul>${data.summary.goalTracking.length > 0 
+                                ? data.summary.goalTracking.map(g => `<li>${g}</li>`).join('') 
+                                : '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>🙏 감사한 일</strong>
+                            <ul>${data.summary.gratitude.length > 0 
+                                ? data.summary.gratitude.map(g => `<li>${g}</li>`).join('') 
+                                : '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>😊 주요 감정</strong>
+                            <ul>${data.summary.emotions.length > 0 
+                                ? data.summary.emotions.map(e => `<li>${e}</li>`).join('') 
+                                : '<li style="opacity: 0.6;">없음</li>'}</ul>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>📖 전체 일기</strong>
+                            <p>${data.summary.fullDiary}</p>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>
+                                LLM: ${data.llmProvider || 'openai'} (${data.model || 'gpt-4o'}) | 
+                                원본 길이: ${data.originalTextLength}자 | 
+                                사용 토큰: ${data.tokensUsed} | 
+                                응답 시간: ${elapsed}초
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    // 에러 시
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 오류 발생</h4>
+                        <p><strong>에러 메시지:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                        <pre style="margin-top: 15px; font-size: 0.85rem;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        async function generateSpeech() {
+            const text = document.getElementById('tts-text').value.trim();
+            const voice = document.getElementById('tts-voice').value;
+            
+            if (!text) {
+                alert('텍스트를 입력해주세요.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('tts-loading');
+            const responseEl = document.getElementById('tts-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/audio/speech`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, voice })
+                });
+
+                if (response.ok && response.headers.get('content-type')?.includes('audio')) {
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                    
+                    loadingEl.classList.add('hidden');
+                    responseEl.classList.remove('hidden');
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ 음성 생성 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>🔊 생성된 음성</strong>
+                            <audio controls style="width: 100%; margin-top: 10px;">
+                                <source src="${audioUrl}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>
+                                음성: ${voice} | 
+                                텍스트 길이: ${text.length}자 | 
+                                응답 시간: ${elapsed}초
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    const data = await response.json();
+                    loadingEl.classList.add('hidden');
+                    responseEl.classList.remove('hidden');
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 오류 발생</h4>
+                        <p><strong>에러 메시지:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                    `;
+                }
+            } catch (error) {
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        async function extractContext() {
+            const conversationText = document.getElementById('context-conversation').value.trim();
+            const llmProvider = document.getElementById('context-llm-provider').value;
+            
+            if (!conversationText) {
+                alert('대화 내용을 입력해주세요.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('context-loading');
+            const responseEl = document.getElementById('context-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
+
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/context/extract`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversationText, llmProvider })
+                });
+
+                const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+
+                if (data.success) {
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ 컨텍스트 추출 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>🧠 추출된 컨텍스트</strong>
+                            <p style="line-height: 1.8; white-space: pre-wrap;">${data.context}</p>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>
+                                LLM: ${data.llmProvider || 'openai'} (${data.model || 'gpt-4o'}) | 
+                                대화 길이: ${data.conversationLength}자 | 
+                                사용 토큰: ${data.tokensUsed} | 
+                                응답 시간: ${elapsed}초
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 오류 발생</h4>
+                        <p><strong>에러 메시지:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                    `;
+                }
+            } catch (error) {
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        async function transcribeAudio() {
+            const fileInput = document.getElementById('audio-file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('오디오 파일을 선택해주세요.');
+                return;
+            }
+
+            // 파일 크기 체크 (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('파일 크기가 10MB를 초과합니다.');
+                return;
+            }
+
+            const loadingEl = document.getElementById('transcribe-loading');
+            const responseEl = document.getElementById('transcribe-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
 
             try {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const response = await fetch('https://diary-backend-beta.vercel.app/api/audio/transcribe', {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/audio/transcribe`, {
                     method: 'POST',
                     body: formData
                 });
 
                 const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
 
-                if (response.ok && data.success) {
-                    resultDiv.className = 'result-box result-success';
-                    resultDiv.innerHTML = `<strong>✅ 성공!</strong>\n\n${JSON.stringify(data, null, 2)}`;
-                } else {
-                    resultDiv.className = 'result-box result-error';
-                    resultDiv.innerHTML = `<strong>❌ 실패</strong>\n\n${JSON.stringify(data, null, 2)}`;
-                }
-            } catch (error) {
-                resultDiv.className = 'result-box result-error';
-                resultDiv.innerHTML = `<strong>❌ 에러 발생</strong>\n\n${error.message}`;
-            }
-        }
-
-        // API 3: TTS
-        async function testAPI3(event) {
-            event.preventDefault();
-            const resultDiv = document.getElementById('result-3');
-            const text = document.getElementById('text-3').value;
-            const voice = document.getElementById('voice-3').value;
-            const instructions = document.getElementById('instructions-3').value;
-
-            resultDiv.className = 'result-box result-loading';
-            resultDiv.innerHTML = '<div class="spinner"></div>음성 생성 중...';
-
-            try {
-                const response = await fetch('https://diary-backend-beta.vercel.app/api/audio/speech', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        text: text,
-                        voice: voice,
-                        instructions: instructions || undefined
-                    })
-                });
-
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const audioUrl = URL.createObjectURL(blob);
-                    
-                    resultDiv.className = 'result-box result-success';
-                    resultDiv.innerHTML = `
-                        <strong>✅ 성공! 음성이 생성되었습니다.</strong><br><br>
-                        <audio controls style="width: 100%; margin-top: 10px;">
-                            <source src="${audioUrl}" type="audio/mpeg">
-                        </audio><br><br>
-                        <a href="${audioUrl}" download="speech.mp3" style="color: #28a745; font-weight: bold;">📥 다운로드</a>
+                if (data.success) {
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ 음성 전사 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>📝 전사된 텍스트</strong>
+                            <p style="line-height: 1.8; white-space: pre-wrap;">${data.text}</p>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>
+                                파일: ${file.name} (${(file.size / 1024).toFixed(1)} KB) | 
+                                언어: ${data.language || '한국어'} | 
+                                응답 시간: ${elapsed}초
+                            </small>
+                        </div>
                     `;
                 } else {
-                    const data = await response.json();
-                    resultDiv.className = 'result-box result-error';
-                    resultDiv.innerHTML = `<strong>❌ 실패</strong>\n\n${JSON.stringify(data, null, 2)}`;
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 오류 발생</h4>
+                        <p><strong>에러 메시지:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                        <pre style="margin-top: 15px; font-size: 0.85rem;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
                 }
             } catch (error) {
-                resultDiv.className = 'result-box result-error';
-                resultDiv.innerHTML = `<strong>❌ 에러 발생</strong>\n\n${error.message}`;
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
             }
         }
 
-        // API 4: 컨텍스트 추출
-        async function testAPI4(event) {
-            event.preventDefault();
-            const resultDiv = document.getElementById('result-4');
-            const conversationText = document.getElementById('conversation-4').value;
-            const llmProvider = document.getElementById('llm-provider-4').value;
-
-            resultDiv.className = 'result-box result-loading';
-            resultDiv.innerHTML = '<div class="spinner"></div>컨텍스트 분석 중...';
-
-            try {
-                const response = await fetch('https://diary-backend-beta.vercel.app/api/context/extract', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        conversationText: conversationText,
-                        llmProvider: llmProvider
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    resultDiv.className = 'result-box result-success';
-                    resultDiv.innerHTML = `<strong>✅ 성공!</strong>\n\n${JSON.stringify(data, null, 2)}`;
-                } else {
-                    resultDiv.className = 'result-box result-error';
-                    resultDiv.innerHTML = `<strong>❌ 실패</strong>\n\n${JSON.stringify(data, null, 2)}`;
-                }
-            } catch (error) {
-                resultDiv.className = 'result-box result-error';
-                resultDiv.innerHTML = `<strong>❌ 에러 발생</strong>\n\n${error.message}`;
+        async function createRealtimeToken() {
+            const model = document.getElementById('realtime-model').value;
+            const voice = document.getElementById('realtime-voice').value;
+            const instructions = document.getElementById('realtime-instructions').value.trim();
+            
+            if (!instructions) {
+                alert('시스템 지시사항을 입력해주세요.');
+                return;
             }
-        }
 
-        // API 5: Realtime 토큰
-        async function testAPI5(event) {
-            event.preventDefault();
-            const resultDiv = document.getElementById('result-5');
-            const userId = document.getElementById('user-id-5').value;
-            const model = document.getElementById('model-5').value;
-            const voice = document.getElementById('voice-5').value;
-            const instructions = document.getElementById('instructions-5').value;
-
-            resultDiv.className = 'result-box result-loading';
-            resultDiv.innerHTML = '<div class="spinner"></div>토큰 발급 중...';
+            const loadingEl = document.getElementById('realtime-token-loading');
+            const responseEl = document.getElementById('realtime-token-response');
+            
+            loadingEl.classList.remove('hidden');
+            responseEl.classList.add('hidden');
 
             try {
-                const response = await fetch('https://diary-backend-beta.vercel.app/api/realtime/token', {
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE_URL}/api/realtime/token`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        userId: userId || undefined,
+                        userId: 'test_user_web_ui',
                         sessionConfig: {
-                            model: model,
-                            voice: voice,
-                            instructions: instructions || '당신은 친근한 AI 도우미입니다.'
+                            model,
+                            voice,
+                            instructions,
                         }
                     })
                 });
 
                 const data = await response.json();
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
 
-                if (response.ok && data.success) {
-                    resultDiv.className = 'result-box result-success';
-                    resultDiv.innerHTML = `<strong>✅ 성공! 토큰이 발급되었습니다.</strong>\n\n${JSON.stringify(data, null, 2)}\n\n<strong>⚠️ 이 토큰을 안전하게 보관하세요!</strong>`;
+                if (data.success) {
+                    const expiresIn = Math.floor((data.expiresAt - Date.now() / 1000) / 60);
+                    const expiresAtDate = new Date(data.expiresAt * 1000);
+                    
+                    responseEl.className = 'response success';
+                    responseEl.innerHTML = `
+                        <h4>✅ Ephemeral Token 발급 완료!</h4>
+                        
+                        <div class="result-section">
+                            <strong>🔑 Token (클라이언트에서 사용)</strong>
+                            <p style="word-break: break-all; font-family: 'Courier New', monospace; background: rgba(0,0,0,0.05); padding: 12px; border-radius: 5px; border: 1px solid #ddd;">
+                                ${data.token}
+                            </p>
+                            <button class="btn-small" onclick="copyToClipboard('${data.token}', this)">
+                                📋 토큰 복사
+                            </button>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>🆔 세션 ID</strong>
+                            <p style="font-family: monospace;">${data.sessionId}</p>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>⏰ 만료 시간</strong>
+                            <p>📅 ${expiresAtDate.toLocaleString('ko-KR')}</p>
+                            <p style="color: ${expiresIn < 5 ? '#d32f2f' : '#1976d2'}; font-weight: bold;">
+                                ⏱️ 약 ${expiresIn}분 후 만료
+                            </p>
+                        </div>
+                        
+                        <div class="result-section">
+                            <strong>⚙️ 세션 설정</strong>
+                            <p><strong>모델:</strong> ${data.config.model}</p>
+                            <p><strong>음성:</strong> ${data.config.voice}</p>
+                        </div>
+                        
+                        <div class="meta-info">
+                            <small>응답 시간: ${elapsed}초</small>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                            <strong>💡 React Native 앱 사용 방법:</strong>
+                            <pre style="background: #fff; padding: 12px; border-radius: 5px; font-size: 0.85rem; margin-top: 10px; overflow-x: auto;">// WebRTC 연결 시 이 토큰 사용
+const sdpResponse = await fetch(
+  'https://api.openai.com/v1/realtime/calls',
+  {
+    method: 'POST',
+    body: offer.sdp,
+    headers: {
+      Authorization: 'Bearer ${data.token}',
+      'Content-Type': 'application/sdp',
+    },
+  }
+);</pre>
+                        </div>
+                        
+                        <div style="margin-top: 15px; padding: 15px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">
+                            <strong>⚠️ 주의사항:</strong>
+                            <ul style="margin: 10px 0; padding-left: 20px; line-height: 1.6;">
+                                <li>이 토큰은 30분 후 자동으로 만료됩니다</li>
+                                <li>토큰으로 시작한 세션은 만료 후에도 계속 유지됩니다</li>
+                                <li>새로운 세션을 시작하려면 새 토큰을 발급받아야 합니다</li>
+                            </ul>
+                        </div>
+                    `;
                 } else {
-                    resultDiv.className = 'result-box result-error';
-                    resultDiv.innerHTML = `<strong>❌ 실패</strong>\n\n${JSON.stringify(data, null, 2)}`;
+                    responseEl.className = 'response error';
+                    responseEl.innerHTML = `
+                        <h4>❌ 토큰 발급 실패</h4>
+                        <p><strong>에러:</strong> ${data.error}</p>
+                        ${data.details ? `<p><strong>상세:</strong> ${data.details}</p>` : ''}
+                        <pre style="margin-top: 15px; font-size: 0.85rem; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 5px;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
                 }
             } catch (error) {
-                resultDiv.className = 'result-box result-error';
-                resultDiv.innerHTML = `<strong>❌ 에러 발생</strong>\n\n${error.message}`;
+                loadingEl.classList.add('hidden');
+                responseEl.classList.remove('hidden');
+                responseEl.className = 'response error';
+                responseEl.innerHTML = `
+                    <h4>❌ 네트워크 오류</h4>
+                    <p>API 호출 중 오류가 발생했습니다.</p>
+                    <p><strong>에러:</strong> ${error.message}</p>
+                `;
             }
         }
 
-        // API 6: 세션 종료
-        async function testAPI6(event) {
-            event.preventDefault();
-            const resultDiv = document.getElementById('result-6');
-            const sessionId = document.getElementById('session-id-6').value;
-            const duration = document.getElementById('duration-6').value;
-            const messageCount = document.getElementById('message-count-6').value;
-            const endedBy = document.getElementById('ended-by-6').value;
-
-            resultDiv.className = 'result-box result-loading';
-            resultDiv.innerHTML = '<div class="spinner"></div>세션 종료 기록 중...';
-
-            try {
-                const response = await fetch('https://diary-backend-beta.vercel.app/api/realtime/end', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        sessionId: sessionId,
-                        duration: duration ? parseInt(duration) : undefined,
-                        messageCount: messageCount ? parseInt(messageCount) : undefined,
-                        endedBy: endedBy
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    resultDiv.className = 'result-box result-success';
-                    resultDiv.innerHTML = `<strong>✅ 성공!</strong>\n\n${JSON.stringify(data, null, 2)}`;
-                } else {
-                    resultDiv.className = 'result-box result-error';
-                    resultDiv.innerHTML = `<strong>❌ 실패</strong>\n\n${JSON.stringify(data, null, 2)}`;
-                }
-            } catch (error) {
-                resultDiv.className = 'result-box result-error';
-                resultDiv.innerHTML = `<strong>❌ 에러 발생</strong>\n\n${error.message}`;
-            }
-        }
-
-        // 스무스 스크롤
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
+        function copyToClipboard(text, buttonElement) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = buttonElement.textContent;
+                buttonElement.textContent = '✅ 복사됨!';
+                buttonElement.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    buttonElement.textContent = originalText;
+                    buttonElement.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('복사 실패: ' + err.message);
             });
+        }
+
+        function copyCurl() {
+            const curlCommand = document.getElementById('curl-command').textContent;
+            
+            navigator.clipboard.writeText(curlCommand).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ 복사됨!';
+                btn.style.background = '#28a745';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            }).catch(err => {
+                alert('복사 실패: ' + err.message);
+            });
+        }
+
+        // Enter 키로 전송
+        document.getElementById('diary-text').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                organizeDiary();
+            }
         });
 
-        // 페이지 로드 시 환영 메시지
-        console.log('%c📚 Diary Backend API 정의서', 'font-size: 24px; color: #667eea; font-weight: bold;');
-        console.log('%c모든 API를 직접 테스트해볼 수 있습니다!', 'font-size: 14px; color: #666;');
+        // ============================================
+        // 메인 탭 전환 함수
+        // ============================================
+        function switchMainTab(tabName) {
+            // 모든 메인 탭 버튼 비활성화
+            document.querySelectorAll('.main-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 모든 메인 탭 컨텐츠 숨기기
+            document.querySelectorAll('.main-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 선택한 탭 활성화
+            event.target.classList.add('active');
+            document.getElementById(`main-tab-${tabName}`).classList.add('active');
+            
+            // 프롬프트 플레이그라운드 탭 선택 시 초기화
+            if (tabName === 'prompt-playground' && !window.playgroundInitialized) {
+                initializePlayground();
+                window.playgroundInitialized = true;
+            }
+        }
+
+        // 프롬프트 플레이그라운드 초기화 (지연 로딩)
+        function initializePlayground() {
+            console.log('Initializing Prompt Playground...');
+            // playground 스크립트는 이미 하단에 포함되어 있음
+        }
     </script>
 </body>
 </html>
