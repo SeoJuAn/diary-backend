@@ -1008,24 +1008,23 @@
             }
         };
 
-
         // ============================================
         // 🔄 API 기반 프롬프트 관리 (DB 연동)
         // ============================================
         
         // API 호출 헬퍼 함수들
         async function fetchPromptVersions(endpoint) {
-            const response = await fetch(\`\${API_BASE_URL}/api/prompts/\${endpoint}/versions\`);
+            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/versions`);
             return await response.json();
         }
 
         async function fetchCurrentPrompt(endpoint) {
-            const response = await fetch(\`\${API_BASE_URL}/api/prompts/\${endpoint}/current\`);
+            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/current`);
             return await response.json();
         }
 
         async function createPromptVersion(endpoint, name, prompt, description) {
-            const response = await fetch(\`\${API_BASE_URL}/api/prompts/\${endpoint}/create\`, {
+            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, prompt, description })
@@ -1034,7 +1033,7 @@
         }
 
         async function switchPromptVersion(endpoint, versionId) {
-            const response = await fetch(\`\${API_BASE_URL}/api/prompts/\${endpoint}/switch\`, {
+            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/switch`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ versionId })
@@ -1043,206 +1042,14 @@
         }
 
         async function deletePromptVersion(versionId) {
-            const response = await fetch(\`\${API_BASE_URL}/api/prompts/versions/\${versionId}\`, {
+            const response = await fetch(`${API_BASE_URL}/api/prompts/versions/${versionId}`, {
                 method: 'DELETE'
             });
             return await response.json();
         }
 
-        // 기존 함수들을 API 기반으로 오버라이드
-        window.originalGetVersions = getVersions; // 백업
-        window.originalGetCurrentVersionData = getCurrentVersionData;
-        window.originalSaveAsNewVersion = saveAsNewVersion;
-        window.originalSwitchToVersion = switchToVersion;
-        window.originalDeleteVersion = deleteVersion;
-        window.originalResetToDefault = resetToDefault;
-        window.originalRenderVersionHistory = renderVersionHistory;
-        window.originalUpdateVersionHeader = updateVersionHeader;
-        
-        getVersions = async function(endpoint) {
-            try {
-                const data = await fetchPromptVersions(endpoint);
-                return data.versions || [];
-            } catch (error) {
-                console.error('Failed to fetch versions:', error);
-                return [];
-            }
-        };
-
-        getCurrentVersionData = async function(endpoint) {
-            try {
-                const data = await fetchCurrentPrompt(endpoint);
-                return {
-                    id: data.id,
-                    version: data.version,
-                    name: data.name,
-                    prompt: data.prompt,
-                    isDefault: data.isDefault,
-                    isDeletable: !data.isDefault,
-                    createdAt: data.createdAt
-                };
-            } catch (error) {
-                console.error('Failed to fetch current version:', error);
-                return null;
-            }
-        };
-
-        saveAsNewVersion = async function(endpoint) {
-            const currentPrompt = getPromptFromEditor(endpoint);
-            if (!currentPrompt || currentPrompt.trim() === '') {
-                alert('❌ 프롬프트를 입력해주세요.');
-                return;
-            }
-            const versionName = prompt('버전 이름을 입력하세요:', \`수정 버전 \${new Date().toLocaleString('ko-KR')}\`);
-            if (!versionName) return;
-            
-            try {
-                const result = await createPromptVersion(endpoint, versionName, currentPrompt, '사용자 생성 버전');
-                if (result.success) {
-                    alert(\`✅ \${result.version.version} 버전으로 저장되었습니다!\`);
-                    await switchPromptVersion(endpoint, result.version.id);
-                    await refreshVersionUI(endpoint);
-                } else {
-                    alert(\`❌ 저장 실패: \${result.error}\`);
-                }
-            } catch (error) {
-                alert(\`❌ 저장 중 오류 발생: \${error.message}\`);
-            }
-        };
-
-        switchToVersion = async function(endpoint, versionId) {
-            try {
-                const currentPrompt = getPromptFromEditor(endpoint);
-                const currentVersionData = await getCurrentVersionData(endpoint);
-                if (currentVersionData && currentPrompt !== currentVersionData.prompt) {
-                    if (!confirm('현재 편집 중인 내용이 저장되지 않았습니다. 계속하시겠습니까?')) return;
-                }
-                const result = await switchPromptVersion(endpoint, versionId);
-                if (result.success) {
-                    alert(\`✅ \${result.currentVersion.version} 버전으로 전환되었습니다!\`);
-                    await refreshVersionUI(endpoint);
-                } else {
-                    alert(\`❌ 전환 실패: \${result.error}\`);
-                }
-            } catch (error) {
-                alert(\`❌ 전환 중 오류 발생: \${error.message}\`);
-            }
-        };
-
-        deleteVersion = async function(endpoint, versionId) {
-            if (!confirm('정말 이 버전을 삭제하시겠습니까?')) return;
-            try {
-                const result = await deletePromptVersion(versionId);
-                if (result.success) {
-                    alert('✅ 버전이 삭제되었습니다!');
-                    await refreshVersionUI(endpoint);
-                } else {
-                    alert(\`❌ 삭제 실패: \${result.error}\`);
-                }
-            } catch (error) {
-                alert(\`❌ 삭제 중 오류 발생: \${error.message}\`);
-            }
-        };
-
-        resetToDefault = async function(endpoint) {
-            if (!confirm('정말 Default 버전으로 되돌리시겠습니까?')) return;
-            try {
-                const versions = await getVersions(endpoint);
-                const defaultVersion = versions.find(v => v.isDefault);
-                if (!defaultVersion) {
-                    alert('❌ Default 버전을 찾을 수 없습니다.');
-                    return;
-                }
-                const result = await switchPromptVersion(endpoint, defaultVersion.id);
-                if (result.success) {
-                    alert('✅ Default 버전으로 되돌렸습니다!');
-                    await refreshVersionUI(endpoint);
-                }
-            } catch (error) {
-                alert(\`❌ 오류 발생: \${error.message}\`);
-            }
-        };
-
-        async function refreshVersionUI(endpoint) {
-            try {
-                const currentVersion = await getCurrentVersionData(endpoint);
-                if (currentVersion) {
-                    displayPrompt(endpoint, currentVersion);
-                    updateVersionHeader(endpoint, currentVersion);
-                }
-                await renderVersionHistory(endpoint);
-            } catch (error) {
-                console.error('Failed to refresh UI:', error);
-            }
-        }
-
-        renderVersionHistory = async function(endpoint) {
-            const historyId = \`\${getShortEndpoint(endpoint)}-version-history\`;
-            const history = document.getElementById(historyId);
-            if (!history) return;
-            try {
-                const versions = await getVersions(endpoint);
-                const currentVersionData = await getCurrentVersionData(endpoint);
-                const currentVersion = currentVersionData?.version;
-                let html = '<h4>📜 버전 히스토리</h4>';
-                for (let i = versions.length - 1; i >= 0; i--) {
-                    const v = versions[i];
-                    const isCurrent = v.version === currentVersion;
-                    const itemClass = isCurrent ? 'version-item current' : 'version-item';
-                    html += \`<div class="\${itemClass}">\`;
-                    html += \`<div class="version-item-header">\`;
-                    html += \`<strong>\${v.version}</strong> - \${v.name}\`;
-                    if (isCurrent) html += \` <span class="badge-current">현재</span>\`;
-                    if (v.isDefault) html += \` <span class="badge-default">Default</span>\`;
-                    html += \`</div>\`;
-                    html += \`<div class="version-item-meta">\`;
-                    html += \`생성일: \${new Date(v.createdAt).toLocaleString('ko-KR')}\`;
-                    html += \`</div>\`;
-                    html += \`<div class="version-item-actions">\`;
-                    if (!isCurrent) html += \`<button class="btn-small" onclick="switchToVersion('\${endpoint}', '\${v.id}')">🔄 전환</button>\`;
-                    if (v.isDeletable && !isCurrent) html += \`<button class="btn-small" onclick="deleteVersion('\${endpoint}', '\${v.id}')" style="background: #dc3545;">🗑️ 삭제</button>\`;
-                    html += \`</div></div>\`;
-                }
-                history.innerHTML = html;
-            } catch (error) {
-                history.innerHTML = '<p style="color: red;">버전 히스토리를 불러오는데 실패했습니다.</p>';
-                console.error('Failed to render version history:', error);
-            }
-        };
-
-        updateVersionHeader = function(endpoint, versionData) {
-            if (!versionData) return;
-            const badge = document.getElementById(\`\${getShortEndpoint(endpoint)}-version-badge\`);
-            const name = document.getElementById(\`\${getShortEndpoint(endpoint)}-version-name\`);
-            const date = document.getElementById(\`\${getShortEndpoint(endpoint)}-version-date\`);
-            if (badge) {
-                badge.textContent = versionData.version;
-                badge.className = versionData.isDefault ? 'version-badge default' : 'version-badge';
-            }
-            if (name) name.textContent = versionData.name;
-            if (date && !versionData.isDefault) {
-                date.textContent = new Date(versionData.createdAt).toLocaleString('ko-KR');
-            }
-        };
-
-        async function initializePromptsFromDB() {
-            const endpoints = ['organize-diary', 'context-extract', 'tts', 'realtime'];
-            for (const endpoint of endpoints) {
-                try {
-                    await refreshVersionUI(endpoint);
-                } catch (error) {
-                    console.error(\`Failed to initialize \${endpoint}:\`, error);
-                }
-            }
-        }
-
-        // 페이지 로드 시 자동 실행
-        document.addEventListener('DOMContentLoaded', initializePromptsFromDB);
-        
-        console.log('✅ API 기반 프롬프트 관리 시스템 로드 완료!');
-
         // ============================================
-        // LocalStorage 관리 함수
+        // LocalStorage 관리 함수 (백업용)
         // ============================================
         
         function initializeStorage() {
@@ -1315,146 +1122,130 @@
         }
 
         // ============================================
-        // 버전 관리 함수
+        // 버전 관리 함수 (API 기반으로 오버라이드)
         // ============================================
 
-        function resetToDefault(endpoint) {
-            if (!confirm('정말 Default 버전으로 되돌리시겠습니까?')) {
-                return;
+        // 기존 LocalStorage 함수들을 API 기반으로 교체
+        getVersions = async function(endpoint) {
+            try {
+                const data = await fetchPromptVersions(endpoint);
+                return data.versions || [];
+            } catch (error) {
+                console.error('Failed to fetch versions:', error);
+                return [];
             }
-            
-            const versions = getVersions(endpoint);
-            const defaultVersion = versions.find(v => v.version === 'v0');
-            
-            if (!defaultVersion) {
-                alert('❌ Default 버전을 찾을 수 없습니다.');
-                return;
+        };
+
+        getCurrentVersionData = async function(endpoint) {
+            try {
+                const data = await fetchCurrentPrompt(endpoint);
+                return {
+                    id: data.id,
+                    version: data.version,
+                    name: data.name,
+                    prompt: data.prompt,
+                    isDefault: data.isDefault,
+                    deletable: !data.isDefault,
+                    createdAt: data.createdAt
+                };
+            } catch (error) {
+                console.error('Failed to fetch current version:', error);
+                return null;
             }
-            
-            // 프롬프트 에디터에 표시
-            displayPrompt(endpoint, defaultVersion);
-            
-            // 현재 버전을 v0로 설정
-            const data = loadFromStorage();
-            data.endpoints[endpoint].currentVersion = 'v0';
-            saveToStorage(data);
-            
-            // UI 업데이트
-            updateVersionHeader(endpoint);
-            renderVersionHistory(endpoint);
-            
-            alert('✅ Default 버전으로 되돌렸습니다!');
+        };
+
+        async function refreshVersionUI(endpoint) {
+            try {
+                const currentVersion = await getCurrentVersionData(endpoint);
+                if (currentVersion) {
+                    displayPrompt(endpoint, currentVersion);
+                    updateVersionHeader(endpoint);
+                }
+                await renderVersionHistory(endpoint);
+            } catch (error) {
+                console.error('Failed to refresh UI:', error);
+            }
         }
 
-        function saveAsNewVersion(endpoint) {
+        // Default 버전으로 되돌리기 (API 기반)
+        resetToDefault = async function(endpoint) {
+            if (!confirm('정말 Default 버전으로 되돌리시겠습니까?')) return;
+            try {
+                const versions = await getVersions(endpoint);
+                const defaultVersion = versions.find(v => v.isDefault);
+                if (!defaultVersion) {
+                    alert('❌ Default 버전을 찾을 수 없습니다.');
+                    return;
+                }
+                const result = await switchPromptVersion(endpoint, defaultVersion.id);
+                if (result.success) {
+                    alert('✅ Default 버전으로 되돌렸습니다!');
+                    await refreshVersionUI(endpoint);
+                }
+            } catch (error) {
+                alert(`❌ 오류 발생: ${error.message}`);
+            }
+        };
+
+        // 새 버전 저장 (API 기반)
+        saveAsNewVersion = async function(endpoint) {
             const currentPrompt = getPromptFromEditor(endpoint);
-            
             if (!currentPrompt || currentPrompt.trim() === '') {
                 alert('❌ 프롬프트를 입력해주세요.');
                 return;
             }
-            
             const versionName = prompt('버전 이름을 입력하세요:', `수정 버전 ${new Date().toLocaleString('ko-KR')}`);
+            if (!versionName) return;
             
-            if (!versionName) {
-                return; // 취소
-            }
-            
-            const data = loadFromStorage();
-            const versions = data.endpoints[endpoint].versions;
-            
-            // 버전 번호 자동 증가
-            const latestVersion = versions[versions.length - 1].version;
-            const newVersionNumber = parseInt(latestVersion.slice(1)) + 1;
-            const newVersion = `v${newVersionNumber}`;
-            
-            // 새 버전 생성
-            const newVersionObj = {
-                version: newVersion,
-                name: versionName,
-                prompt: currentPrompt,
-                createdAt: Date.now(),
-                isDefault: false,
-                deletable: true
-            };
-            
-            versions.push(newVersionObj);
-            data.endpoints[endpoint].currentVersion = newVersion;
-            data.metadata.totalVersions++;
-            
-            if (saveToStorage(data)) {
-                alert(`✅ ${newVersion} 버전으로 저장되었습니다!`);
-                updateVersionHeader(endpoint);
-                renderVersionHistory(endpoint);
-            }
-        }
-
-        function switchToVersion(endpoint, targetVersion) {
-            const versions = getVersions(endpoint);
-            const selectedVersion = versions.find(v => v.version === targetVersion);
-            
-            if (!selectedVersion) {
-                alert('❌ 버전을 찾을 수 없습니다.');
-                return;
-            }
-            
-            // 현재 에디터 내용이 저장 안 되어 있으면 경고
-            const currentPrompt = getPromptFromEditor(endpoint);
-            const currentVersionObj = getCurrentVersionData(endpoint);
-            
-            if (currentPrompt !== currentVersionObj.prompt) {
-                if (!confirm('현재 편집 중인 내용이 저장되지 않았습니다. 계속하시겠습니까?')) {
-                    return;
+            try {
+                const result = await createPromptVersion(endpoint, versionName, currentPrompt, '사용자 생성 버전');
+                if (result.success) {
+                    alert(`✅ ${result.version.version} 버전으로 저장되었습니다!`);
+                    await switchPromptVersion(endpoint, result.version.id);
+                    await refreshVersionUI(endpoint);
+                } else {
+                    alert(`❌ 저장 실패: ${result.error}`);
                 }
+            } catch (error) {
+                alert(`❌ 저장 중 오류 발생: ${error.message}`);
             }
-            
-            // 선택한 버전으로 전환
-            displayPrompt(endpoint, selectedVersion);
-            
-            const data = loadFromStorage();
-            data.endpoints[endpoint].currentVersion = targetVersion;
-            saveToStorage(data);
-            
-            // UI 업데이트
-            updateVersionHeader(endpoint);
-            renderVersionHistory(endpoint);
-            
-            alert(`✅ ${targetVersion} 버전으로 전환되었습니다!`);
-        }
+        };
 
-        function deleteVersion(endpoint, versionToDelete) {
-            // v0은 삭제 불가
-            if (versionToDelete === 'v0') {
-                alert('❌ Default 버전은 삭제할 수 없습니다.');
-                return;
+        // 버전 전환 (API 기반)
+        switchToVersion = async function(endpoint, versionId) {
+            try {
+                const currentPrompt = getPromptFromEditor(endpoint);
+                const currentVersionData = await getCurrentVersionData(endpoint);
+                if (currentVersionData && currentPrompt !== currentVersionData.prompt) {
+                    if (!confirm('현재 편집 중인 내용이 저장되지 않았습니다. 계속하시겠습니까?')) return;
+                }
+                const result = await switchPromptVersion(endpoint, versionId);
+                if (result.success) {
+                    alert(`✅ ${result.currentVersion.version} 버전으로 전환되었습니다!`);
+                    await refreshVersionUI(endpoint);
+                } else {
+                    alert(`❌ 전환 실패: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ 전환 중 오류 발생: ${error.message}`);
             }
-            
-            if (!confirm(`정말 ${versionToDelete} 버전을 삭제하시겠습니까?`)) {
-                return;
+        };
+
+        // 버전 삭제 (API 기반)
+        deleteVersion = async function(endpoint, versionId) {
+            if (!confirm('정말 이 버전을 삭제하시겠습니까?')) return;
+            try {
+                const result = await deletePromptVersion(versionId);
+                if (result.success) {
+                    alert('✅ 버전이 삭제되었습니다!');
+                    await refreshVersionUI(endpoint);
+                } else {
+                    alert(`❌ 삭제 실패: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ 삭제 중 오류 발생: ${error.message}`);
             }
-            
-            const data = loadFromStorage();
-            const currentVersion = data.endpoints[endpoint].currentVersion;
-            
-            // 현재 사용 중인 버전 삭제 시 경고
-            if (versionToDelete === currentVersion) {
-                alert('❌ 현재 사용 중인 버전은 삭제할 수 없습니다. 다른 버전으로 전환 후 삭제하세요.');
-                return;
-            }
-            
-            // 버전 삭제
-            data.endpoints[endpoint].versions = data.endpoints[endpoint].versions.filter(
-                v => v.version !== versionToDelete
-            );
-            data.metadata.totalVersions--;
-            
-            saveToStorage(data);
-            
-            // UI 갱신
-            renderVersionHistory(endpoint);
-            
-            alert(`✅ ${versionToDelete} 버전이 삭제되었습니다!`);
-        }
+        };
 
         // ============================================
         // UI 업데이트 함수
@@ -1526,57 +1317,63 @@
             }
         }
 
-        function renderVersionHistory(endpoint) {
+        // 버전 히스토리 렌더링 (API 기반)
+        renderVersionHistory = async function(endpoint) {
             const historyId = `${getShortEndpoint(endpoint)}-version-history`;
             const history = document.getElementById(historyId);
             if (!history) return;
             
-            const versions = getVersions(endpoint);
-            const currentVersion = getCurrentVersion(endpoint);
-            
-            let html = '<h4>📜 버전 히스토리</h4>';
-            
-            // 최신 버전부터 표시 (역순)
-            for (let i = versions.length - 1; i >= 0; i--) {
-                const v = versions[i];
-                const isCurrent = v.version === currentVersion;
-                const itemClass = isCurrent ? 'version-item current' : 
-                                 (v.isDefault ? 'version-item default-version' : 'version-item');
+            try {
+                const versions = await getVersions(endpoint);
+                const currentVersionData = await getCurrentVersionData(endpoint);
+                const currentVersion = currentVersionData?.version;
                 
-                html += `
-                    <div class="${itemClass}">
-                        <div class="version-item-header">
-                            <div class="version-item-info">
-                                <span class="version-badge ${v.isDefault ? 'default' : ''}">${v.version}</span>
-                                <span class="version-name">${v.isDefault ? '🔒 ' : ''}${v.name}</span>
-                                ${isCurrent ? '<span class="version-status">✅ 현재 버전</span>' : ''}
+                let html = '<h4>📜 버전 히스토리</h4>';
+                
+                for (let i = versions.length - 1; i >= 0; i--) {
+                    const v = versions[i];
+                    const isCurrent = v.version === currentVersion;
+                    const itemClass = isCurrent ? 'version-item current' : 
+                                     (v.isDefault ? 'version-item default-version' : 'version-item');
+                    
+                    html += `
+                        <div class="${itemClass}">
+                            <div class="version-item-header">
+                                <div class="version-item-info">
+                                    <span class="version-badge ${v.isDefault ? 'default' : ''}">${v.version}</span>
+                                    <span class="version-name">${v.isDefault ? '🔒 ' : ''}${v.name}</span>
+                                    ${isCurrent ? '<span class="version-status">✅ 현재 버전</span>' : ''}
+                                </div>
+                            </div>
+                            <div class="version-meta">
+                                <small>${v.isDefault ? '시스템 기본 프롬프트' : new Date(v.createdAt).toLocaleString('ko-KR')}</small>
+                            </div>
+                            <div class="version-actions">
+                                ${isCurrent ? 
+                                    '<button class="btn-small" disabled>이 버전 보기</button>' : 
+                                    `<button class="btn-small" onclick="switchToVersion('${endpoint}', '${v.id}')">이 버전으로 전환</button>`
+                                }
+                                ${v.isDeletable && !isCurrent ? 
+                                    `<button class="btn-small btn-danger" onclick="deleteVersion('${endpoint}', '${v.id}')">삭제</button>` :
+                                    '<button class="btn-small" disabled title="Default 버전은 삭제할 수 없습니다">삭제 불가</button>'
+                                }
                             </div>
                         </div>
-                        <div class="version-meta">
-                            <small>${v.isDefault ? '시스템 기본 프롬프트' : new Date(v.createdAt).toLocaleString('ko-KR')}</small>
-                        </div>
-                        <div class="version-actions">
-                            ${isCurrent ? 
-                                '<button class="btn-small" disabled>이 버전 보기</button>' : 
-                                `<button class="btn-small" onclick="switchToVersion('${endpoint}', '${v.version}')">이 버전으로 전환</button>`
-                            }
-                            ${v.deletable ? 
-                                `<button class="btn-small btn-danger" onclick="deleteVersion('${endpoint}', '${v.version}')">삭제</button>` :
-                                '<button class="btn-small" disabled title="Default 버전은 삭제할 수 없습니다">삭제 불가</button>'
-                            }
-                        </div>
-                    </div>
-                `;
+                    `;
+                }
+                
+                history.innerHTML = html;
+            } catch (error) {
+                history.innerHTML = '<p style="color: red;">버전 히스토리를 불러오는데 실패했습니다.</p>';
+                console.error('Failed to render version history:', error);
             }
-            
-            history.innerHTML = html;
-        }
+        };
 
         // ============================================
         // 탭 전환
         // ============================================
 
-        function switchTab(tabName) {
+        async function switchTab(tabName) {
             // 모든 탭 비활성화
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1585,15 +1382,15 @@
             event.target.classList.add('active');
             document.getElementById(`tab-${tabName}`).classList.add('active');
             
-            // 해당 탭의 프롬프트 로드
-            loadPromptForTab(tabName);
+            // 해당 탭의 프롬프트 로드 (DB에서)
+            await loadPromptForTab(tabName);
         }
 
-        function loadPromptForTab(endpoint) {
-            const versionData = getCurrentVersionData(endpoint);
+        async function loadPromptForTab(endpoint) {
+            const versionData = await getCurrentVersionData(endpoint);
             if (versionData) {
                 displayPrompt(endpoint, versionData);
-                updateVersionHeader(endpoint);
+                await updateVersionHeader(endpoint);
             }
         }
 
@@ -2277,12 +2074,12 @@
         // 초기화
         // ============================================
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // LocalStorage 초기화
+        document.addEventListener('DOMContentLoaded', async () => {
+            // LocalStorage 초기화 (백업용)
             initializeStorage();
             
-            // 첫 번째 탭 로드
-            loadPromptForTab('organize-diary');
+            // 첫 번째 탭 로드 (DB에서 가져오기)
+            await loadPromptForTab('organize-diary');
             
             // 모든 캐릭터 카운터 이벤트 리스너 추가
             const textareas = document.querySelectorAll('textarea');
@@ -2296,7 +2093,7 @@
             // 저장 공간 사용량 표시
             updateStorageUsage();
             
-            console.log('✅ 프롬프트 플레이그라운드 초기화 완료!');
+            console.log('✅ 프롬프트 플레이그라운드 초기화 완료! (DB 연동)');
         });
     </script>
 </body>
