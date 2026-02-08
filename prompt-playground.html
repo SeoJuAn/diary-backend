@@ -906,15 +906,12 @@
 
                     <!-- 프리셋 선택 -->
                     <div class="form-group">
-                        <label for="realtime-preset">🎯 빠른 설정 프리셋:</label>
-                        <select id="realtime-preset" onchange="applyRealtimePreset(this.value)">
-                            <option value="balanced">⚖️ 기본 (Balanced)</option>
-                            <option value="fast_response">⚡ 빠른 응답 (Fast Response)</option>
-                            <option value="high_quality">✨ 높은 품질 (High Quality)</option>
-                            <option value="custom">🎨 커스텀 (Custom)</option>
+                        <label for="realtime-preset">🎯 고급 설정 프리셋:</label>
+                        <select id="realtime-preset" onchange="handlePresetChange(this.value)">
+                            <!-- DB에서 동적으로 로드됨 -->
                         </select>
                         <small style="display: block; margin-top: 5px; color: #666;">
-                            💡 프리셋을 선택하면 아래 고급 설정이 자동으로 조정됩니다.
+                            💡 프리셋을 선택하면 고급 설정이 자동으로 적용됩니다. 프롬프트와는 독립적으로 관리됩니다.
                         </small>
                     </div>
 
@@ -1425,14 +1422,8 @@
             if (!versionName) return;
             
             try {
-                // realtime 엔드포인트인 경우 고급 설정도 함께 저장
-                let advancedConfig = {};
-                if (endpoint === 'realtime') {
-                    advancedConfig = getAdvancedConfig();
-                    console.log('💾 고급 설정 포함 저장:', advancedConfig);
-                }
-                
-                const result = await createPromptVersion(endpoint, versionName, currentPrompt, '사용자 생성 버전', advancedConfig);
+                // 프롬프트만 저장 (고급 설정은 별도 관리)
+                const result = await createPromptVersion(endpoint, versionName, currentPrompt, '사용자 생성 버전');
                 if (result.success) {
                     alert(`✅ ${result.version.version} 버전으로 저장되었습니다!`);
                     await switchPromptVersion(endpoint, result.version.id);
@@ -2459,14 +2450,17 @@
             }
         }
 
-        // 프리셋 적용
+        // 프리셋 선택 시 처리
+        async function handlePresetChange(presetId) {
+            if (!presetId) return;
+            await switchAdvancedPreset(presetId);
+        }
+        
+        // 프리셋 적용 (하위 호환성 유지)
         function applyRealtimePreset(presetName) {
-            // 커스텀 프리셋인 경우 현재 UI 상태 유지 (아무것도 안 함)
-            // DB에 저장된 커스텀 버전을 불러오려면 "히스토리 보기"에서 버전 전환
-            if (presetName === 'custom') {
-                console.log('ℹ️ 커스텀 모드: 현재 설정을 자유롭게 조절하세요. "커스텀 프리셋으로 저장"을 눌러 DB에 저장할 수 있습니다.');
-                return;
-            }
+            // 레거시 함수 - 이제 handlePresetChange로 처리됨
+            console.log('applyRealtimePreset called with:', presetName);
+        }
             
             const preset = REALTIME_PRESETS[presetName];
             if (!preset || !preset.config) return;
@@ -2567,29 +2561,37 @@
             isApplyingPreset = false;
         }
 
-        // 커스텀 프리셋으로 저장 (DB에 새 버전 생성)
+        // 커스텀 프리셋으로 저장 (DB에 고급 설정만 저장)
         async function saveAdvancedSettingsToPreset() {
             const config = getAdvancedConfig();
-            const currentPrompt = document.getElementById('realtime-instructions').value;
             
-            // 버전 이름 입력받기
-            const versionName = prompt('커스텀 프리셋 이름을 입력하세요:', `커스텀 설정 ${new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
-            if (!versionName) return;
+            // 프리셋 이름 입력받기
+            const presetName = prompt('커스텀 프리셋 이름을 입력하세요:', `커스텀${new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
+            if (!presetName) return;
             
             try {
-                // DB에 새 버전으로 저장
-                const result = await createPromptVersion('realtime', versionName, currentPrompt, '커스텀 고급 설정 포함', config);
+                // DB에 고급 설정만 저장
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: 'realtime',
+                        presetName: presetName,
+                        config: config
+                    })
+                });
+                
+                const result = await response.json();
                 
                 if (result.success) {
-                    alert(`✅ ${result.version.version} 버전으로 저장되었습니다!\n\n"📜 히스토리 보기"에서 언제든지 불러올 수 있습니다.`);
+                    alert(`✅ "${presetName}" 프리셋으로 저장되었습니다!\n\n프리셋 드롭다운에서 선택할 수 있습니다.`);
                     
-                    // 현재 버전으로 전환할지 물어보기
-                    if (confirm('이 설정을 현재 활성 버전으로 전환하시겠습니까?')) {
-                        await switchPromptVersion('realtime', result.version.id);
-                        await refreshVersionUI('realtime');
-                    } else {
-                        // 버전 UI만 새로고침
-                        await refreshVersionUI('realtime');
+                    // 프리셋 목록 새로고침
+                    await loadAdvancedPresets();
+                    
+                    // 현재 프리셋으로 전환할지 물어보기
+                    if (confirm('이 프리셋을 현재 활성 프리셋으로 전환하시겠습니까?')) {
+                        await switchAdvancedPreset(result.preset.id);
                     }
                     
                     console.log('💾 저장된 커스텀 프리셋:', config);
@@ -2599,6 +2601,76 @@
             } catch (error) {
                 alert(`❌ 저장 중 오류 발생: ${error.message}`);
                 console.error('❌ 커스텀 프리셋 저장 실패:', error);
+            }
+        }
+        
+        // 고급 프리셋 목록 불러오기
+        async function loadAdvancedPresets() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/list?endpoint=realtime`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 프리셋 드롭다운 업데이트
+                    const presetSelect = document.getElementById('realtime-preset');
+                    presetSelect.innerHTML = '';
+                    
+                    result.presets.forEach(preset => {
+                        const option = document.createElement('option');
+                        option.value = preset.id;
+                        option.textContent = preset.presetName;
+                        if (preset.isCurrent) {
+                            option.selected = true;
+                        }
+                        presetSelect.appendChild(option);
+                    });
+                    
+                    console.log('✅ 고급 프리셋 목록 로드:', result.presets.length);
+                    return result.presets;
+                } else {
+                    console.error('❌ 프리셋 로드 실패:', result.error);
+                    return [];
+                }
+            } catch (error) {
+                console.error('❌ 프리셋 로드 오류:', error);
+                return [];
+            }
+        }
+        
+        // 고급 프리셋 전환
+        async function switchAdvancedPreset(presetId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/switch`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: 'realtime',
+                        presetId: presetId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // UI에 프리셋 적용
+                    loadAdvancedConfig({
+                        temperature: result.preset.temperature,
+                        speed: result.preset.speed,
+                        threshold: result.preset.threshold,
+                        prefix_padding_ms: result.preset.prefixPaddingMs,
+                        silence_duration_ms: result.preset.silenceDurationMs,
+                        idle_timeout_ms: result.preset.idleTimeoutMs,
+                        max_output_tokens: result.preset.maxOutputTokens,
+                        noise_reduction: result.preset.noiseReduction,
+                        truncation: result.preset.truncation
+                    });
+                    
+                    console.log(`✅ 프리셋 전환: ${result.preset.presetName}`);
+                } else {
+                    console.error('❌ 프리셋 전환 실패:', result.error);
+                }
+            } catch (error) {
+                console.error('❌ 프리셋 전환 오류:', error);
             }
         }
 
@@ -2614,9 +2686,18 @@
             await loadPromptForTab('organize-diary');
             await loadPromptForTab('context-extract');
             await loadPromptForTab('tts');
-            await loadPromptForTab('realtime'); // realtime 탭도 로드하여 고급 설정 복원
+            await loadPromptForTab('realtime');
             
-            console.log('✅ 모든 프롬프트 탭 로드 완료');
+            // 고급 프리셋 로드 (realtime 전용)
+            await loadAdvancedPresets();
+            
+            // 현재 활성 프리셋 적용
+            const currentPreset = document.querySelector('#realtime-preset option[selected]');
+            if (currentPreset) {
+                await handlePresetChange(currentPreset.value);
+            }
+            
+            console.log('✅ 모든 프롬프트 탭 + 고급 프리셋 로드 완료');
             
             // 모든 캐릭터 카운터 이벤트 리스너 추가
             const textareas = document.querySelectorAll('textarea');
