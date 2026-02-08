@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, sessionConfig } = req.body;
+    const { userId, sessionConfig, advancedConfig } = req.body;
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ① 입력 검증
@@ -42,6 +42,12 @@ export default async function handler(req, res) {
             voice: 'alloy',
             instructions: '당신은 친근한 일기 작성 도우미입니다.',
           },
+          advancedConfig: {
+            temperature: 0.8,
+            speed: 1.0,
+            threshold: 0.5,
+            // ... 기타 고급 설정
+          },
         },
       });
     }
@@ -56,6 +62,22 @@ export default async function handler(req, res) {
         ],
       });
     }
+
+    // 고급 설정 기본값
+    const defaultAdvancedConfig = {
+      temperature: 0.8,
+      speed: 1.0,
+      threshold: 0.5,
+      prefix_padding_ms: 300,
+      silence_duration_ms: 200,
+      idle_timeout_ms: null,
+      max_output_tokens: 'inf',
+      noise_reduction: null,
+      truncation: 'auto',
+    };
+
+    // 클라이언트에서 보낸 고급 설정 병합
+    const finalAdvancedConfig = { ...defaultAdvancedConfig, ...advancedConfig };
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ② OpenAI API 키 확인
@@ -74,6 +96,7 @@ export default async function handler(req, res) {
       model: sessionConfig.model,
       voice: sessionConfig.voice,
       hasInstructions: !!sessionConfig.instructions,
+      advancedConfig: finalAdvancedConfig,
     });
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -98,9 +121,34 @@ export default async function handler(req, res) {
             type: 'realtime',
             model: sessionConfig.model,
             instructions: sessionConfig.instructions || '당신은 친근한 AI 도우미입니다.',
+            temperature: finalAdvancedConfig.temperature,
+            max_output_tokens: finalAdvancedConfig.max_output_tokens,
+            truncation: finalAdvancedConfig.truncation,
             audio: {
+              input: {
+                format: {
+                  type: 'audio/pcm',
+                  rate: 24000,
+                },
+                transcription: null,
+                noise_reduction: finalAdvancedConfig.noise_reduction,
+                turn_detection: {
+                  type: 'server_vad',
+                  threshold: finalAdvancedConfig.threshold,
+                  prefix_padding_ms: finalAdvancedConfig.prefix_padding_ms,
+                  silence_duration_ms: finalAdvancedConfig.silence_duration_ms,
+                  idle_timeout_ms: finalAdvancedConfig.idle_timeout_ms,
+                  create_response: true,
+                  interrupt_response: true,
+                },
+              },
               output: {
+                format: {
+                  type: 'audio/pcm',
+                  rate: 24000,
+                },
                 voice: sessionConfig.voice || 'alloy',
+                speed: finalAdvancedConfig.speed,
               },
             },
           },
@@ -146,6 +194,7 @@ export default async function handler(req, res) {
       config: {
         model: data.session?.model || sessionConfig.model,
         voice: sessionConfig.voice || 'alloy',
+        advancedConfig: finalAdvancedConfig,
       },
     });
 
