@@ -2420,6 +2420,9 @@
         }
 
         // 슬라이더 값 업데이트
+        // 프리셋 적용 중인지 플래그
+        let isApplyingPreset = false;
+
         function updateSliderValue(sliderId) {
             const slider = document.getElementById(sliderId);
             const valueSpan = document.getElementById(`${sliderId}-value`);
@@ -2435,18 +2438,54 @@
                 valueSpan.textContent = value.toFixed(1);
             }
 
-            // 프리셋을 Custom으로 변경
-            document.getElementById('realtime-preset').value = 'custom';
+            // 프리셋 적용 중이 아닐 때만 Custom으로 변경
+            if (!isApplyingPreset) {
+                document.getElementById('realtime-preset').value = 'custom';
+            }
         }
 
         // 프리셋 적용
         function applyRealtimePreset(presetName) {
-            if (presetName === 'custom') return;
+            // 커스텀 프리셋인 경우 localStorage에서 불러오기
+            if (presetName === 'custom') {
+                const savedCustom = localStorage.getItem('realtime_custom_preset');
+                if (savedCustom) {
+                    try {
+                        const customConfig = JSON.parse(savedCustom);
+                        REALTIME_PRESETS.custom.config = customConfig;
+                        
+                        isApplyingPreset = true;
+                        document.getElementById('realtime-temperature').value = customConfig.temperature;
+                        document.getElementById('realtime-speed').value = customConfig.speed;
+                        document.getElementById('realtime-threshold').value = customConfig.threshold;
+                        document.getElementById('realtime-prefix-padding').value = customConfig.prefix_padding_ms;
+                        document.getElementById('realtime-silence-duration').value = customConfig.silence_duration_ms;
+                        document.getElementById('realtime-max-tokens').value = customConfig.max_output_tokens;
+                        document.getElementById('realtime-truncation').value = customConfig.truncation;
+                        document.getElementById('realtime-noise-reduction').checked = customConfig.noise_reduction === true;
+                        
+                        updateSliderValue('realtime-temperature');
+                        updateSliderValue('realtime-speed');
+                        updateSliderValue('realtime-threshold');
+                        updateSliderValue('realtime-prefix-padding');
+                        updateSliderValue('realtime-silence-duration');
+                        isApplyingPreset = false;
+                        
+                        console.log('✅ 커스텀 프리셋 불러옴:', customConfig);
+                    } catch (e) {
+                        console.error('❌ 커스텀 프리셋 로드 실패:', e);
+                    }
+                }
+                return;
+            }
             
             const preset = REALTIME_PRESETS[presetName];
             if (!preset || !preset.config) return;
             
             const config = preset.config;
+            
+            // 프리셋 적용 중 플래그 설정
+            isApplyingPreset = true;
             
             // UI 업데이트
             document.getElementById('realtime-temperature').value = config.temperature;
@@ -2464,6 +2503,9 @@
             updateSliderValue('realtime-threshold');
             updateSliderValue('realtime-prefix-padding');
             updateSliderValue('realtime-silence-duration');
+            
+            // 프리셋 적용 완료
+            isApplyingPreset = false;
             
             console.log(`✅ 프리셋 적용: ${preset.name}`);
         }
@@ -2519,7 +2561,10 @@
             const config = getAdvancedConfig();
             REALTIME_PRESETS.custom.config = config;
             
-            alert('✅ 현재 설정을 커스텀 프리셋으로 저장했습니다!\n\n프리셋 선택에서 "커스텀"을 선택하면 이 설정을 다시 불러올 수 있습니다.');
+            // localStorage에 저장 (새로고침 후에도 유지)
+            localStorage.setItem('realtime_custom_preset', JSON.stringify(config));
+            
+            alert('✅ 현재 설정을 커스텀 프리셋으로 저장했습니다!\n\n프리셋 선택에서 "커스텀"을 선택하면 이 설정을 다시 불러올 수 있습니다.\n(새로고침 후에도 유지됩니다)');
             console.log('💾 저장된 커스텀 프리셋:', config);
         }
 
@@ -2536,6 +2581,18 @@
             
             // 고급 설정 초기화 (기본값으로)
             loadAdvancedConfig(DEFAULT_ADVANCED_CONFIG);
+            
+            // 커스텀 프리셋이 localStorage에 저장되어 있으면 불러오기
+            const savedCustom = localStorage.getItem('realtime_custom_preset');
+            if (savedCustom) {
+                try {
+                    const customConfig = JSON.parse(savedCustom);
+                    REALTIME_PRESETS.custom.config = customConfig;
+                    console.log('✅ 저장된 커스텀 프리셋 로드:', customConfig);
+                } catch (e) {
+                    console.error('❌ 커스텀 프리셋 로드 실패:', e);
+                }
+            }
             
             // 모든 캐릭터 카운터 이벤트 리스너 추가
             const textareas = document.querySelectorAll('textarea');
