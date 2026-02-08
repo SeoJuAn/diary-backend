@@ -1540,7 +1540,7 @@
             return mapping[endpoint];
         }
 
-        function toggleVersionHistory(endpoint) {
+        window.toggleVersionHistory = function(endpoint) {
             const historyId = `${getShortEndpoint(endpoint)}-version-history`;
             const history = document.getElementById(historyId);
             
@@ -1640,7 +1640,7 @@
         // 샘플 데이터 및 입력 관리
         // ============================================
 
-        function loadSample(endpoint, sampleNum) {
+        window.loadSample = function(endpoint, sampleNum) {
             const inputId = `${getShortEndpoint(endpoint)}-input`;
             const input = document.getElementById(inputId);
             if (input && SAMPLE_DATA[endpoint] && SAMPLE_DATA[endpoint][sampleNum]) {
@@ -1649,7 +1649,7 @@
             }
         }
 
-        function clearInput(endpoint) {
+        window.clearInput = function(endpoint) {
             const inputId = `${getShortEndpoint(endpoint)}-input`;
             const input = document.getElementById(inputId);
             if (input) {
@@ -2791,33 +2791,27 @@
         }
 
         // ============================================
-        // 전역 함수 노출 (onclick에서 사용)
-        // ============================================
-        
-        // 이미 전역으로 선언된 함수들은 유지
-        // async function으로 선언된 함수들을 window에 할당
-        window.testPrompt = testPrompt;
-        window.connectRealtimeWebRTC = connectRealtimeWebRTC;
-        window.disconnectRealtimeWebRTC = disconnectRealtimeWebRTC;
-        window.startRealtimeVoiceChat = startRealtimeVoiceChat;
-        window.stopRealtimeVoiceChat = stopRealtimeVoiceChat;
-        window.loadSample = loadSample;
-        window.clearInput = clearInput;
-        window.toggleVersionHistory = toggleVersionHistory;
-        window.toggleAdvancedSettings = toggleAdvancedSettings;
-        window.togglePresetHistory = togglePresetHistory;
-        window.resetAdvancedSettings = resetAdvancedSettings;
-        window.saveAdvancedSettingsToPreset = saveAdvancedSettingsToPreset;
-        window.exportAllVersions = exportAllVersions;
-        window.importVersions = importVersions;
-        window.handlePresetChange = handlePresetChange;
-        window.updateSliderValue = updateSliderValue;
-
-        // ============================================
         // 초기화
         // ============================================
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // 전역 함수 노출 (onclick에서 사용) - DOMContentLoaded 내부로 이동
+            window.testPrompt = testPrompt;
+            window.connectRealtimeWebRTC = connectRealtimeWebRTC;
+            window.disconnectRealtimeWebRTC = disconnectRealtimeWebRTC;
+            window.startRealtimeVoiceChat = startRealtimeVoiceChat;
+            window.stopRealtimeVoiceChat = stopRealtimeVoiceChat;
+            window.exportAllVersions = exportAllVersions;
+            window.importVersions = importVersions;
+            window.toggleAdvancedSettings = toggleAdvancedSettings;
+            window.updateSliderValue = updateSliderValue;
+            window.resetAdvancedSettings = resetAdvancedSettings;
+            window.handlePresetChange = handlePresetChange;
+            window.saveAdvancedSettingsToPreset = saveAdvancedSettingsToPreset;
+            window.togglePresetHistory = togglePresetHistory;
+            
+            console.log('✅ 전역 함수 노출 완료');
+            
             // LocalStorage 초기화 (백업용)
             initializeStorage();
             
