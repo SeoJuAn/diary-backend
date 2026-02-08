@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       // 1. 대상 버전이 존재하는지 확인
       const checkResult = await client.query(
         `SELECT id, endpoint, version, name
-        FROM diary.prompt_versions
+        FROM prompt_versions
         WHERE id = $1 AND endpoint = $2`,
         [versionId, endpoint]
       );
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
 
       // 2. 기존 current 플래그 제거
       await client.query(
-        `UPDATE diary.prompt_versions
+        `UPDATE prompt_versions
         SET is_current = FALSE, updated_at = CURRENT_TIMESTAMP
         WHERE endpoint = $1 AND is_current = TRUE`,
         [endpoint]
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
 
       // 3. 새 버전을 current로 설정
       const updateResult = await client.query(
-        `UPDATE diary.prompt_versions
+        `UPDATE prompt_versions
         SET is_current = TRUE, updated_at = CURRENT_TIMESTAMP
         WHERE id = $1
         RETURNING 
