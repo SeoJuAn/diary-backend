@@ -913,6 +913,10 @@
                         <small style="display: block; margin-top: 5px; color: #666;">
                             💡 프리셋을 선택하면 고급 설정이 자동으로 적용됩니다. 프롬프트와는 독립적으로 관리됩니다.
                         </small>
+                        <button class="btn-small" onclick="togglePresetHistory()" style="margin-top: 10px;">
+                            📜 프리셋 히스토리 보기
+                        </button>
+                        <div class="preset-history" id="realtime-preset-history"></div>
                     </div>
 
                     <!-- 고급 설정 아코디언 -->
@@ -2671,6 +2675,126 @@
                 }
             } catch (error) {
                 console.error('❌ 프리셋 전환 오류:', error);
+            }
+        }
+        
+        // 프리셋 히스토리 토글
+        function togglePresetHistory() {
+            const history = document.getElementById('realtime-preset-history');
+            if (history.style.display === 'none' || history.style.display === '') {
+                history.style.display = 'block';
+                renderPresetHistory();
+            } else {
+                history.style.display = 'none';
+            }
+        }
+        
+        // 프리셋 히스토리 렌더링
+        async function renderPresetHistory() {
+            const history = document.getElementById('realtime-preset-history');
+            if (!history) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/list?endpoint=realtime`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const presets = result.presets;
+                    
+                    let html = '<h4 style="margin-top: 15px;">📜 프리셋 히스토리</h4>';
+                    
+                    for (const preset of presets) {
+                        const isCurrent = preset.isCurrent;
+                        const isSystem = preset.isSystem;
+                        const itemClass = isCurrent ? 'version-item current' : 'version-item';
+                        
+                        // 프리셋 파라미터 상세 정보
+                        const configDetails = `
+                            <div style="margin-top: 8px; padding: 10px; background: #f0f4ff; border-radius: 5px; font-size: 0.85rem;">
+                                <strong>🎛️ 파라미터:</strong><br>
+                                • Temperature: ${preset.temperature || 0.8}<br>
+                                • Speed: ${preset.speed || 1.0}x<br>
+                                • Threshold: ${preset.threshold || 0.5}<br>
+                                • Prefix Padding: ${preset.prefixPaddingMs || 300}ms<br>
+                                • Silence Duration: ${preset.silenceDurationMs || 200}ms<br>
+                                • Max Tokens: ${preset.maxOutputTokens || 'inf'}<br>
+                                • Noise Reduction: ${preset.noiseReduction ? '활성화' : '비활성화'}<br>
+                                • Truncation: ${preset.truncation || 'auto'}
+                            </div>
+                        `;
+                        
+                        html += `
+                            <div class="${itemClass}" style="margin-bottom: 10px; padding: 15px; background: white; border: 2px solid ${isCurrent ? '#667eea' : '#ddd'}; border-radius: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="font-size: 1.1rem; font-weight: bold; color: #667eea;">
+                                            ${isSystem ? '🔒 ' : ''}${preset.presetName}
+                                        </span>
+                                        ${isCurrent ? '<span style="margin-left: 10px; color: #28a745; font-weight: bold;">✅ 현재 프리셋</span>' : ''}
+                                    </div>
+                                </div>
+                                <div style="margin-top: 5px; font-size: 0.9rem; color: #666;">
+                                    <small>${isSystem ? '시스템 프리셋' : new Date(preset.createdAt).toLocaleString('ko-KR')}</small>
+                                </div>
+                                ${configDetails}
+                                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                                    ${isCurrent ? 
+                                        '<button class="btn-small" disabled>현재 사용 중</button>' : 
+                                        `<button class="btn-small" onclick="switchAdvancedPreset('${preset.id}'); renderPresetHistory();">이 프리셋으로 전환</button>`
+                                    }
+                                    ${!isSystem && !isCurrent ? 
+                                        `<button class="btn-small btn-danger" onclick="deletePreset('${preset.id}')">삭제</button>` :
+                                        '<button class="btn-small" disabled title="시스템 프리셋은 삭제할 수 없습니다">삭제 불가</button>'
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    history.innerHTML = html;
+                } else {
+                    history.innerHTML = '<p style="color: red;">프리셋 히스토리를 불러오는데 실패했습니다.</p>';
+                }
+            } catch (error) {
+                history.innerHTML = '<p style="color: red;">프리셋 히스토리를 불러오는데 실패했습니다.</p>';
+                console.error('Failed to render preset history:', error);
+            }
+        }
+        
+        // 프리셋 삭제
+        async function deletePreset(presetId) {
+            if (!confirm('정말로 이 프리셋을 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없습니다.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/delete`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: 'realtime',
+                        presetId: presetId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`✅ 프리셋 "${result.deletedPreset.name}"이(가) 삭제되었습니다.`);
+                    
+                    // 프리셋 목록 새로고침
+                    await loadAdvancedPresets();
+                    
+                    // 히스토리 다시 렌더링
+                    await renderPresetHistory();
+                    
+                    console.log('✅ 프리셋 삭제 완료:', result.deletedPreset);
+                } else {
+                    alert(`❌ 삭제 실패: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ 삭제 중 오류 발생: ${error.message}`);
+                console.error('❌ 프리셋 삭제 실패:', error);
             }
         }
 
