@@ -51,7 +51,6 @@ export default async function handler(req, res) {
         version,
         name,
         prompt,
-        advanced_config as "advancedConfig",
         is_default as "isDefault",
         created_at as "createdAt"
       FROM prompt_versions
@@ -69,7 +68,6 @@ export default async function handler(req, res) {
           version,
           name,
           prompt,
-          advanced_config as "advancedConfig",
           is_default as "isDefault",
           created_at as "createdAt"
         FROM prompt_versions
@@ -92,7 +90,6 @@ export default async function handler(req, res) {
         version: defaultResult.rows[0].version,
         prompt: defaultResult.rows[0].prompt,
         name: defaultResult.rows[0].name,
-        advancedConfig: defaultResult.rows[0].advancedConfig,
         isDefault: defaultResult.rows[0].isDefault,
         createdAt: defaultResult.rows[0].createdAt,
       });
@@ -107,7 +104,6 @@ export default async function handler(req, res) {
       version: currentPrompt.version,
       prompt: currentPrompt.prompt,
       name: currentPrompt.name,
-      advancedConfig: currentPrompt.advancedConfig,
       isDefault: currentPrompt.isDefault,
       createdAt: currentPrompt.createdAt,
     });

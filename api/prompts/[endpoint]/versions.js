@@ -51,7 +51,6 @@ export default async function handler(req, res) {
         version, 
         name, 
         prompt,
-        advanced_config as "advancedConfig",
         is_default as "isDefault",
         is_current as "isCurrent",
         description,
