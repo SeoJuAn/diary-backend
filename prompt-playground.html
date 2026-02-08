@@ -1615,8 +1615,14 @@
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
             // 선택한 탭 활성화
-            event.target.classList.add('active');
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+            const clickedTab = document.querySelector(`button.tab[onclick*="${tabName}"]`);
+            if (clickedTab) {
+                clickedTab.classList.add('active');
+            }
+            const tabContent = document.getElementById(`tab-${tabName}`);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
             
             // 해당 탭의 프롬프트 로드 (DB에서)
             await loadPromptForTab(tabName);
