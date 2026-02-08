@@ -1387,7 +1387,7 @@
                 const currentVersion = await getCurrentVersionData(endpoint);
                 if (currentVersion) {
                     displayPrompt(endpoint, currentVersion);
-                    updateVersionHeader(endpoint);
+                    await updateVersionHeader(endpoint);
                 }
                 await renderVersionHistory(endpoint);
             } catch (error) {
@@ -1488,11 +1488,9 @@
                 updateCharCounter(promptEditorId);
             }
             
-            // realtime 엔드포인트인 경우 고급 설정도 불러오기
-            if (endpoint === 'realtime' && versionData.advancedConfig) {
-                loadAdvancedConfig(versionData.advancedConfig);
-                console.log('✅ 고급 설정 불러옴:', versionData.advancedConfig);
-            }
+            // 프롬프트와 프리셋은 완전히 분리되어 관리됨
+            // 고급 설정(프리셋)은 별도로 로드됨
+            console.log('✅ 프롬프트 불러옴:', versionData.version, versionData.name);
         }
 
         function getPromptFromEditor(endpoint) {
@@ -1511,8 +1509,8 @@
             return mapping[endpoint];
         }
 
-        function updateVersionHeader(endpoint) {
-            const versionData = getCurrentVersionData(endpoint);
+        async function updateVersionHeader(endpoint) {
+            const versionData = await getCurrentVersionData(endpoint);
             if (!versionData) return;
             
             const prefix = endpoint.replace('-', '');
@@ -1525,8 +1523,10 @@
                 badge.className = versionData.isDefault ? 'version-badge default' : 'version-badge';
             }
             if (name) name.textContent = versionData.name;
-            if (date && !versionData.isDefault) {
+            if (date && versionData.createdAt && !versionData.isDefault) {
                 date.textContent = new Date(versionData.createdAt).toLocaleString('ko-KR');
+            } else if (date) {
+                date.textContent = '';
             }
         }
 
@@ -1571,20 +1571,7 @@
                     const itemClass = isCurrent ? 'version-item current' : 
                                      (v.isDefault ? 'version-item default-version' : 'version-item');
                     
-                    // realtime 엔드포인트인 경우 고급 설정 정보 표시
-                    let advancedConfigInfo = '';
-                    if (endpoint === 'realtime' && v.advancedConfig && Object.keys(v.advancedConfig).length > 0) {
-                        const config = v.advancedConfig;
-                        advancedConfigInfo = `
-                            <div class="version-advanced-config" style="margin-top: 8px; padding: 8px; background: #f0f4ff; border-radius: 5px; font-size: 0.85rem;">
-                                <strong>🎛️ 고급 설정:</strong> 
-                                Temperature: ${config.temperature || 0.8}, 
-                                Speed: ${config.speed || 1.0}x, 
-                                Threshold: ${config.threshold || 0.5}
-                            </div>
-                        `;
-                    }
-                    
+                    // 프롬프트 버전만 표시 (고급 설정은 프리셋에서 별도 관리)
                     html += `
                         <div class="${itemClass}">
                             <div class="version-item-header">
@@ -1597,7 +1584,6 @@
                             <div class="version-meta">
                                 <small>${v.isDefault ? '시스템 기본 프롬프트' : new Date(v.createdAt).toLocaleString('ko-KR')}</small>
                             </div>
-                            ${advancedConfigInfo}
                             <div class="version-actions">
                                 ${isCurrent ? 
                                     '<button class="btn-small" disabled>이 버전 보기</button>' : 
