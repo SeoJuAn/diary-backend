@@ -121,25 +121,21 @@ export default async function handler(req, res) {
             type: 'realtime',
             model: sessionConfig.model,
             instructions: sessionConfig.instructions || '당신은 친근한 AI 도우미입니다.',
-            temperature: finalAdvancedConfig.temperature,
-            max_output_tokens: finalAdvancedConfig.max_output_tokens,
-            truncation: finalAdvancedConfig.truncation,
             audio: {
               input: {
                 format: {
                   type: 'audio/pcm',
                   rate: 24000,
                 },
-                transcription: null,
-                noise_reduction: finalAdvancedConfig.noise_reduction,
+                transcription: {
+                  model: 'whisper-1'
+                },
                 turn_detection: {
                   type: 'server_vad',
                   threshold: finalAdvancedConfig.threshold,
                   prefix_padding_ms: finalAdvancedConfig.prefix_padding_ms,
                   silence_duration_ms: finalAdvancedConfig.silence_duration_ms,
-                  idle_timeout_ms: finalAdvancedConfig.idle_timeout_ms,
                   create_response: true,
-                  interrupt_response: true,
                 },
               },
               output: {
@@ -148,7 +144,6 @@ export default async function handler(req, res) {
                   rate: 24000,
                 },
                 voice: sessionConfig.voice || 'alloy',
-                speed: finalAdvancedConfig.speed,
               },
             },
           },
