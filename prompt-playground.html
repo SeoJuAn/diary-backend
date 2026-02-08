@@ -1576,6 +1576,20 @@
                     const itemClass = isCurrent ? 'version-item current' : 
                                      (v.isDefault ? 'version-item default-version' : 'version-item');
                     
+                    // realtime 엔드포인트인 경우 고급 설정 정보 표시
+                    let advancedConfigInfo = '';
+                    if (endpoint === 'realtime' && v.advancedConfig && Object.keys(v.advancedConfig).length > 0) {
+                        const config = v.advancedConfig;
+                        advancedConfigInfo = `
+                            <div class="version-advanced-config" style="margin-top: 8px; padding: 8px; background: #f0f4ff; border-radius: 5px; font-size: 0.85rem;">
+                                <strong>🎛️ 고급 설정:</strong> 
+                                Temperature: ${config.temperature || 0.8}, 
+                                Speed: ${config.speed || 1.0}x, 
+                                Threshold: ${config.threshold || 0.5}
+                            </div>
+                        `;
+                    }
+                    
                     html += `
                         <div class="${itemClass}">
                             <div class="version-item-header">
@@ -1588,6 +1602,7 @@
                             <div class="version-meta">
                                 <small>${v.isDefault ? '시스템 기본 프롬프트' : new Date(v.createdAt).toLocaleString('ko-KR')}</small>
                             </div>
+                            ${advancedConfigInfo}
                             <div class="version-actions">
                                 ${isCurrent ? 
                                     '<button class="btn-small" disabled>이 버전 보기</button>' : 
@@ -2595,13 +2610,13 @@
             // LocalStorage 초기화 (백업용)
             initializeStorage();
             
-            // 첫 번째 탭 로드 (DB에서 가져오기)
+            // 모든 엔드포인트 탭 로드 (DB에서 가져오기)
             await loadPromptForTab('organize-diary');
+            await loadPromptForTab('context-extract');
+            await loadPromptForTab('tts');
+            await loadPromptForTab('realtime'); // realtime 탭도 로드하여 고급 설정 복원
             
-            // 고급 설정 초기화 (기본값으로)
-            // 실제로는 loadPromptForTab('organize-diary') 완료 후
-            // realtime 탭을 처음 열 때 DB에서 불러온 설정으로 자동 설정됨
-            loadAdvancedConfig(DEFAULT_ADVANCED_CONFIG);
+            console.log('✅ 모든 프롬프트 탭 로드 완료');
             
             // 모든 캐릭터 카운터 이벤트 리스너 추가
             const textareas = document.querySelectorAll('textarea');
