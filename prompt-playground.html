@@ -2446,36 +2446,10 @@
 
         // 프리셋 적용
         function applyRealtimePreset(presetName) {
-            // 커스텀 프리셋인 경우 localStorage에서 불러오기
+            // 커스텀 프리셋인 경우 현재 UI 상태 유지 (아무것도 안 함)
+            // DB에 저장된 커스텀 버전을 불러오려면 "히스토리 보기"에서 버전 전환
             if (presetName === 'custom') {
-                const savedCustom = localStorage.getItem('realtime_custom_preset');
-                if (savedCustom) {
-                    try {
-                        const customConfig = JSON.parse(savedCustom);
-                        REALTIME_PRESETS.custom.config = customConfig;
-                        
-                        isApplyingPreset = true;
-                        document.getElementById('realtime-temperature').value = customConfig.temperature;
-                        document.getElementById('realtime-speed').value = customConfig.speed;
-                        document.getElementById('realtime-threshold').value = customConfig.threshold;
-                        document.getElementById('realtime-prefix-padding').value = customConfig.prefix_padding_ms;
-                        document.getElementById('realtime-silence-duration').value = customConfig.silence_duration_ms;
-                        document.getElementById('realtime-max-tokens').value = customConfig.max_output_tokens;
-                        document.getElementById('realtime-truncation').value = customConfig.truncation;
-                        document.getElementById('realtime-noise-reduction').checked = customConfig.noise_reduction === true;
-                        
-                        updateSliderValue('realtime-temperature');
-                        updateSliderValue('realtime-speed');
-                        updateSliderValue('realtime-threshold');
-                        updateSliderValue('realtime-prefix-padding');
-                        updateSliderValue('realtime-silence-duration');
-                        isApplyingPreset = false;
-                        
-                        console.log('✅ 커스텀 프리셋 불러옴:', customConfig);
-                    } catch (e) {
-                        console.error('❌ 커스텀 프리셋 로드 실패:', e);
-                    }
-                }
+                console.log('ℹ️ 커스텀 모드: 현재 설정을 자유롭게 조절하세요. "커스텀 프리셋으로 저장"을 눌러 DB에 저장할 수 있습니다.');
                 return;
             }
             
@@ -2539,6 +2513,9 @@
                 config = DEFAULT_ADVANCED_CONFIG;
             }
             
+            // 프리셋 적용 중 플래그 설정
+            isApplyingPreset = true;
+            
             document.getElementById('realtime-temperature').value = config.temperature || 0.8;
             document.getElementById('realtime-speed').value = config.speed || 1.0;
             document.getElementById('realtime-threshold').value = config.threshold || 0.5;
@@ -2554,18 +2531,60 @@
             updateSliderValue('realtime-threshold');
             updateSliderValue('realtime-prefix-padding');
             updateSliderValue('realtime-silence-duration');
+            
+            // 기본값과 비교하여 프리셋 자동 감지
+            const isDefault = JSON.stringify(config) === JSON.stringify(DEFAULT_ADVANCED_CONFIG);
+            const isBalanced = JSON.stringify(config) === JSON.stringify(REALTIME_PRESETS.balanced.config);
+            const isFastResponse = JSON.stringify(config) === JSON.stringify(REALTIME_PRESETS.fast_response.config);
+            const isHighQuality = JSON.stringify(config) === JSON.stringify(REALTIME_PRESETS.high_quality.config);
+            
+            if (isDefault || isBalanced) {
+                document.getElementById('realtime-preset').value = 'balanced';
+            } else if (isFastResponse) {
+                document.getElementById('realtime-preset').value = 'fast_response';
+            } else if (isHighQuality) {
+                document.getElementById('realtime-preset').value = 'high_quality';
+            } else {
+                document.getElementById('realtime-preset').value = 'custom';
+            }
+            
+            // 프리셋 적용 완료
+            isApplyingPreset = false;
         }
 
-        // 커스텀 프리셋으로 저장
-        function saveAdvancedSettingsToPreset() {
+        // 커스텀 프리셋으로 저장 (DB에 새 버전 생성)
+        async function saveAdvancedSettingsToPreset() {
             const config = getAdvancedConfig();
-            REALTIME_PRESETS.custom.config = config;
+            const currentPrompt = document.getElementById('realtime-instructions').value;
             
-            // localStorage에 저장 (새로고침 후에도 유지)
-            localStorage.setItem('realtime_custom_preset', JSON.stringify(config));
+            // 버전 이름 입력받기
+            const versionName = prompt('커스텀 프리셋 이름을 입력하세요:', `커스텀 설정 ${new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
+            if (!versionName) return;
             
-            alert('✅ 현재 설정을 커스텀 프리셋으로 저장했습니다!\n\n프리셋 선택에서 "커스텀"을 선택하면 이 설정을 다시 불러올 수 있습니다.\n(새로고침 후에도 유지됩니다)');
-            console.log('💾 저장된 커스텀 프리셋:', config);
+            try {
+                // DB에 새 버전으로 저장
+                const result = await createPromptVersion('realtime', versionName, currentPrompt, '커스텀 고급 설정 포함', config);
+                
+                if (result.success) {
+                    alert(`✅ ${result.version.version} 버전으로 저장되었습니다!\n\n"📜 히스토리 보기"에서 언제든지 불러올 수 있습니다.`);
+                    
+                    // 현재 버전으로 전환할지 물어보기
+                    if (confirm('이 설정을 현재 활성 버전으로 전환하시겠습니까?')) {
+                        await switchPromptVersion('realtime', result.version.id);
+                        await refreshVersionUI('realtime');
+                    } else {
+                        // 버전 UI만 새로고침
+                        await refreshVersionUI('realtime');
+                    }
+                    
+                    console.log('💾 저장된 커스텀 프리셋:', config);
+                } else {
+                    alert(`❌ 저장 실패: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ 저장 중 오류 발생: ${error.message}`);
+                console.error('❌ 커스텀 프리셋 저장 실패:', error);
+            }
         }
 
         // ============================================
@@ -2580,19 +2599,9 @@
             await loadPromptForTab('organize-diary');
             
             // 고급 설정 초기화 (기본값으로)
+            // 실제로는 loadPromptForTab('organize-diary') 완료 후
+            // realtime 탭을 처음 열 때 DB에서 불러온 설정으로 자동 설정됨
             loadAdvancedConfig(DEFAULT_ADVANCED_CONFIG);
-            
-            // 커스텀 프리셋이 localStorage에 저장되어 있으면 불러오기
-            const savedCustom = localStorage.getItem('realtime_custom_preset');
-            if (savedCustom) {
-                try {
-                    const customConfig = JSON.parse(savedCustom);
-                    REALTIME_PRESETS.custom.config = customConfig;
-                    console.log('✅ 저장된 커스텀 프리셋 로드:', customConfig);
-                } catch (e) {
-                    console.error('❌ 커스텀 프리셋 로드 실패:', e);
-                }
-            }
             
             // 모든 캐릭터 카운터 이벤트 리스너 추가
             const textareas = document.querySelectorAll('textarea');
