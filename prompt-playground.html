@@ -1242,26 +1242,26 @@
         
         // API 호출 헬퍼 함수들
         async function fetchPromptVersions(endpoint) {
-            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/versions`);
+            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}?action=versions`);
             return await response.json();
         }
 
         async function fetchCurrentPrompt(endpoint) {
-            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/current`);
+            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}`);
             return await response.json();
         }
 
-        async function createPromptVersion(endpoint, name, prompt, description, advancedConfig = {}) {
-            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/create`, {
+        async function createPromptVersion(endpoint, name, prompt, description) {
+            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, prompt, description, advancedConfig })
+                body: JSON.stringify({ name, prompt, description })
             });
             return await response.json();
         }
 
         async function switchPromptVersion(endpoint, versionId) {
-            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/switch`, {
+            const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ versionId })
@@ -2561,7 +2561,7 @@
             
             try {
                 // DB에 고급 설정만 저장
-                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/create`, {
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2597,7 +2597,7 @@
         // 고급 프리셋 목록 불러오기
         async function loadAdvancedPresets() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/list?endpoint=realtime`);
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets?endpoint=realtime`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -2630,7 +2630,7 @@
         // 고급 프리셋 전환
         async function switchAdvancedPreset(presetId) {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/switch`, {
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2681,7 +2681,7 @@
             if (!history) return;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/list?endpoint=realtime`);
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets?endpoint=realtime`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -2754,7 +2754,7 @@
             }
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/advanced-presets/delete`, {
+                const response = await fetch(`${API_BASE_URL}/api/advanced-presets`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
