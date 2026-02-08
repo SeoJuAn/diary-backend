@@ -2138,6 +2138,20 @@
                 realtimeDataChannel.addEventListener('open', () => {
                     console.log('✅ DataChannel 열림');
                     addRealtimeChatMessage('system', 'DataChannel이 열렸습니다. 양방향 통신 준비 완료!');
+                    
+                    // 세션 레벨 설정 업데이트 (truncation, modalities 등)
+                    const advancedConfig = getAdvancedConfig();
+                    realtimeDataChannel.send(JSON.stringify({
+                        type: 'session.update',
+                        session: {
+                            truncation: advancedConfig.truncation,
+                            max_output_tokens: advancedConfig.max_output_tokens === 'inf' ? null : parseInt(advancedConfig.max_output_tokens)
+                        }
+                    }));
+                    console.log('⚙️ 세션 설정 업데이트:', {
+                        truncation: advancedConfig.truncation,
+                        max_output_tokens: advancedConfig.max_output_tokens
+                    });
                 });
                 
                 realtimeDataChannel.addEventListener('message', (event) => {
@@ -2233,19 +2247,28 @@
             // 현재 편집 중인 프롬프트 가져오기
             const instructions = document.getElementById('realtime-instructions').value;
             
+            // 고급 설정 가져오기
+            const advancedConfig = getAdvancedConfig();
+            
             realtimeDataChannel.send(JSON.stringify({
                 type: 'response.create',
                 response: {
                     output_modalities: ['text', 'audio'],
-                    instructions: instructions || '사용자의 말을 듣고 친근하게 응답해주세요.'
+                    instructions: instructions || '사용자의 말을 듣고 친근하게 응답해주세요.',
+                    temperature: advancedConfig.temperature,
+                    max_output_tokens: advancedConfig.max_output_tokens === 'inf' ? null : advancedConfig.max_output_tokens
                 }
             }));
             
             document.getElementById('realtime-start-voice-btn').style.display = 'none';
             document.getElementById('realtime-stop-voice-btn').style.display = 'inline-flex';
             
-            addRealtimeChatMessage('system', '🎤 음성 입력이 시작되었습니다. 커스텀 프롬프트로 대화합니다!');
-            console.log('🎤 음성 채팅 시작 (프롬프트:', instructions.substring(0, 50) + '...)');
+            addRealtimeChatMessage('system', `🎤 음성 입력이 시작되었습니다. 커스텀 프롬프트로 대화합니다! (Temperature: ${advancedConfig.temperature}, Speed: ${advancedConfig.speed}x)`);
+            console.log('🎤 음성 채팅 시작', {
+                prompt: instructions.substring(0, 50) + '...',
+                temperature: advancedConfig.temperature,
+                max_tokens: advancedConfig.max_output_tokens
+            });
         }
 
         function stopRealtimeVoiceChat() {
