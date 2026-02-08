@@ -51,9 +51,10 @@ export default async function handler(req, res) {
         version,
         name,
         prompt,
+        advanced_config as "advancedConfig",
         is_default as "isDefault",
         created_at as "createdAt"
-      FROM diary.prompt_versions
+      FROM prompt_versions
       WHERE endpoint = $1 AND is_current = TRUE
       LIMIT 1`,
       [endpoint]
@@ -68,9 +69,10 @@ export default async function handler(req, res) {
           version,
           name,
           prompt,
+          advanced_config as "advancedConfig",
           is_default as "isDefault",
           created_at as "createdAt"
-        FROM diary.prompt_versions
+        FROM prompt_versions
         WHERE endpoint = $1 AND is_default = TRUE
         LIMIT 1`,
         [endpoint]
@@ -85,10 +87,12 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
+        id: defaultResult.rows[0].id,
         endpoint,
         version: defaultResult.rows[0].version,
         prompt: defaultResult.rows[0].prompt,
         name: defaultResult.rows[0].name,
+        advancedConfig: defaultResult.rows[0].advancedConfig,
         isDefault: defaultResult.rows[0].isDefault,
         createdAt: defaultResult.rows[0].createdAt,
       });
@@ -98,10 +102,12 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
+      id: currentPrompt.id,
       endpoint,
       version: currentPrompt.version,
       prompt: currentPrompt.prompt,
       name: currentPrompt.name,
+      advancedConfig: currentPrompt.advancedConfig,
       isDefault: currentPrompt.isDefault,
       createdAt: currentPrompt.createdAt,
     });

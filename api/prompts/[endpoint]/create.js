@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     }
 
     // Request body 검증
-    const { name, prompt, description } = req.body;
+    const { name, prompt, description, advancedConfig } = req.body;
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return res.status(400).json({
@@ -58,6 +58,9 @@ export default async function handler(req, res) {
       });
     }
 
+    // advancedConfig를 JSON으로 변환 (realtime 엔드포인트에만 사용)
+    const advancedConfigJson = advancedConfig ? JSON.stringify(advancedConfig) : '{}';
+
     console.log(`📝 Creating new prompt version for endpoint: ${endpoint}`);
     console.log(`Name: ${name}`);
 
@@ -66,16 +69,16 @@ export default async function handler(req, res) {
       `WITH next_version AS (
         SELECT 
           'v' || (COALESCE(MAX(CAST(SUBSTRING(version FROM 2) AS INTEGER)), -1) + 1) as new_version
-        FROM diary.prompt_versions
+        FROM prompt_versions
         WHERE endpoint = $1
       )
-      INSERT INTO diary.prompt_versions (
+      INSERT INTO prompt_versions (
         endpoint, 
         version, 
         name, 
         prompt, 
-        description, 
-        is_deletable, 
+        description,
+        advanced_config,
         is_current
       )
       SELECT 
@@ -84,7 +87,7 @@ export default async function handler(req, res) {
         $2,
         $3,
         $4,
-        TRUE,
+        $5::jsonb,
         FALSE
       FROM next_version
       RETURNING 
@@ -94,11 +97,11 @@ export default async function handler(req, res) {
         name,
         prompt,
         description,
+        advanced_config as "advancedConfig",
         is_default as "isDefault",
-        is_deletable as "isDeletable",
         is_current as "isCurrent",
         created_at as "createdAt"`,
-      [endpoint, name.trim(), prompt.trim(), description?.trim() || null]
+      [endpoint, name.trim(), prompt.trim(), description?.trim() || null, advancedConfigJson]
     );
 
     const newVersion = result.rows[0];

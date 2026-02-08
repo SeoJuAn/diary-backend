@@ -611,6 +611,75 @@
             font-weight: 600;
             text-align: left;
         }
+
+        /* 고급 설정 스타일 */
+        .tooltip-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 18px;
+            font-size: 0.75rem;
+            cursor: help;
+            margin-left: 5px;
+        }
+
+        .tooltip-icon:hover {
+            background: #764ba2;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: none;
+        }
+
+        #realtime-advanced-settings h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #advanced-settings-toggle {
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+            padding: 12px 20px;
+        }
     </style>
 </head>
 <body>
@@ -834,6 +903,164 @@
                             <option value="verse">Verse</option>
                         </select>
                     </div>
+
+                    <!-- 프리셋 선택 -->
+                    <div class="form-group">
+                        <label for="realtime-preset">🎯 빠른 설정 프리셋:</label>
+                        <select id="realtime-preset" onchange="applyRealtimePreset(this.value)">
+                            <option value="balanced">⚖️ 기본 (Balanced)</option>
+                            <option value="fast_response">⚡ 빠른 응답 (Fast Response)</option>
+                            <option value="high_quality">✨ 높은 품질 (High Quality)</option>
+                            <option value="custom">🎨 커스텀 (Custom)</option>
+                        </select>
+                        <small style="display: block; margin-top: 5px; color: #666;">
+                            💡 프리셋을 선택하면 아래 고급 설정이 자동으로 조정됩니다.
+                        </small>
+                    </div>
+
+                    <!-- 고급 설정 아코디언 -->
+                    <div style="margin-top: 20px;">
+                        <button class="btn-small" onclick="toggleAdvancedSettings()" id="advanced-settings-toggle">
+                            ▶ 고급 설정 (Advanced Settings)
+                        </button>
+                    </div>
+
+                    <div id="realtime-advanced-settings" style="display: none; margin-top: 15px; padding: 20px; background: #f0f4ff; border-radius: 10px; border: 2px solid #667eea;">
+                        
+                        <!-- 음성 품질 설정 -->
+                        <h4 style="color: #667eea; margin-bottom: 15px;">🎵 음성 품질</h4>
+                        
+                        <div class="form-group">
+                            <label for="realtime-temperature">
+                                Temperature (음성 다양성)
+                                <span class="tooltip-icon" title="AI 음성의 창의성을 조절합니다. 낮을수록 일관적이고 예측 가능하며, 높을수록 다양하고 자연스럽습니다.">ℹ️</span>
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="range" id="realtime-temperature" min="0.6" max="1.2" step="0.1" value="0.8" 
+                                       oninput="updateSliderValue('realtime-temperature')" 
+                                       style="flex: 1;">
+                                <span id="realtime-temperature-value" style="min-width: 50px; font-weight: bold;">0.8</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 5px;">
+                                <span>일관적</span>
+                                <span>창의적</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="realtime-speed">
+                                Speed (말하기 속도)
+                                <span class="tooltip-icon" title="AI의 말하기 속도를 조절합니다. 0.25x ~ 4.0x 범위에서 설정 가능합니다.">ℹ️</span>
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="range" id="realtime-speed" min="0.5" max="2.0" step="0.1" value="1.0" 
+                                       oninput="updateSliderValue('realtime-speed')" 
+                                       style="flex: 1;">
+                                <span id="realtime-speed-value" style="min-width: 50px; font-weight: bold;">1.0x</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 5px;">
+                                <span>느림 (0.5x)</span>
+                                <span>빠름 (2.0x)</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="realtime-noise-reduction">
+                                <input type="checkbox" id="realtime-noise-reduction" style="width: auto; margin-right: 8px;">
+                                Noise Reduction (노이즈 감소)
+                                <span class="tooltip-icon" title="마이크 입력에서 배경 소음을 제거합니다. 소음이 많은 환경에서 유용합니다.">ℹ️</span>
+                            </label>
+                        </div>
+
+                        <hr style="margin: 25px 0; border: none; border-top: 1px solid #ddd;">
+
+                        <!-- 음성 감지 (VAD) 설정 -->
+                        <h4 style="color: #667eea; margin-bottom: 15px;">🎤 음성 감지 (VAD)</h4>
+
+                        <div class="form-group">
+                            <label for="realtime-threshold">
+                                Threshold (감지 민감도)
+                                <span class="tooltip-icon" title="음성을 감지하는 민감도입니다. 낮을수록 작은 소리도 감지하며, 높을수록 큰 소리만 감지합니다.">ℹ️</span>
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="range" id="realtime-threshold" min="0.0" max="1.0" step="0.1" value="0.5" 
+                                       oninput="updateSliderValue('realtime-threshold')" 
+                                       style="flex: 1;">
+                                <span id="realtime-threshold-value" style="min-width: 50px; font-weight: bold;">0.5</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 5px;">
+                                <span>민감 (0.0)</span>
+                                <span>둔감 (1.0)</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="realtime-silence-duration">
+                                Silence Duration (침묵 인식 시간)
+                                <span class="tooltip-icon" title="말을 멈춘 후 몇 밀리초 동안 침묵이 지속되어야 발화가 끝났다고 판단할지 설정합니다.">ℹ️</span>
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="range" id="realtime-silence-duration" min="0" max="1000" step="50" value="200" 
+                                       oninput="updateSliderValue('realtime-silence-duration')" 
+                                       style="flex: 1;">
+                                <span id="realtime-silence-duration-value" style="min-width: 60px; font-weight: bold;">200ms</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 5px;">
+                                <span>즉시 (0ms)</span>
+                                <span>여유있게 (1000ms)</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="realtime-prefix-padding">
+                                Prefix Padding (발화 시작 버퍼)
+                                <span class="tooltip-icon" title="음성 감지 시 발화 시작 부분이 잘리지 않도록 앞부분에 추가할 버퍼 시간입니다.">ℹ️</span>
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="range" id="realtime-prefix-padding" min="0" max="1000" step="50" value="300" 
+                                       oninput="updateSliderValue('realtime-prefix-padding')" 
+                                       style="flex: 1;">
+                                <span id="realtime-prefix-padding-value" style="min-width: 60px; font-weight: bold;">300ms</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-top: 5px;">
+                                <span>없음 (0ms)</span>
+                                <span>넉넉하게 (1000ms)</span>
+                            </div>
+                        </div>
+
+                        <hr style="margin: 25px 0; border: none; border-top: 1px solid #ddd;">
+
+                        <!-- AI 응답 설정 -->
+                        <h4 style="color: #667eea; margin-bottom: 15px;">🤖 AI 응답</h4>
+
+                        <div class="form-group">
+                            <label for="realtime-max-tokens">
+                                Max Output Tokens (최대 출력 토큰)
+                                <span class="tooltip-icon" title="AI가 한 번에 생성할 수 있는 최대 토큰 수입니다. 'inf'는 무제한을 의미합니다.">ℹ️</span>
+                            </label>
+                            <input type="text" id="realtime-max-tokens" value="inf" placeholder="inf 또는 숫자 (예: 4096)"
+                                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;">
+                            <small style="display: block; margin-top: 5px; color: #666;">
+                                💡 'inf'는 무제한, 또는 1~4096 사이의 숫자를 입력하세요.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="realtime-truncation">
+                                Truncation (대화 히스토리 관리)
+                                <span class="tooltip-icon" title="대화가 길어질 때 이전 메시지를 자동으로 제거할지 설정합니다.">ℹ️</span>
+                            </label>
+                            <select id="realtime-truncation" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px;">
+                                <option value="auto">Auto (자동 관리)</option>
+                                <option value="disabled">Disabled (비활성화)</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-top: 20px; display: flex; gap: 10px;">
+                            <button class="btn-small" onclick="resetAdvancedSettings()">🔄 기본값으로 리셋</button>
+                            <button class="btn-small btn-success" onclick="saveAdvancedSettingsToPreset()">💾 커스텀 프리셋으로 저장</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="section">
@@ -1023,11 +1250,11 @@
             return await response.json();
         }
 
-        async function createPromptVersion(endpoint, name, prompt, description) {
+        async function createPromptVersion(endpoint, name, prompt, description, advancedConfig = {}) {
             const response = await fetch(`${API_BASE_URL}/api/prompts/${endpoint}/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, prompt, description })
+                body: JSON.stringify({ name, prompt, description, advancedConfig })
             });
             return await response.json();
         }
@@ -1198,7 +1425,14 @@
             if (!versionName) return;
             
             try {
-                const result = await createPromptVersion(endpoint, versionName, currentPrompt, '사용자 생성 버전');
+                // realtime 엔드포인트인 경우 고급 설정도 함께 저장
+                let advancedConfig = {};
+                if (endpoint === 'realtime') {
+                    advancedConfig = getAdvancedConfig();
+                    console.log('💾 고급 설정 포함 저장:', advancedConfig);
+                }
+                
+                const result = await createPromptVersion(endpoint, versionName, currentPrompt, '사용자 생성 버전', advancedConfig);
                 if (result.success) {
                     alert(`✅ ${result.version.version} 버전으로 저장되었습니다!`);
                     await switchPromptVersion(endpoint, result.version.id);
@@ -1257,6 +1491,12 @@
             if (editor) {
                 editor.value = versionData.prompt;
                 updateCharCounter(promptEditorId);
+            }
+            
+            // realtime 엔드포인트인 경우 고급 설정도 불러오기
+            if (endpoint === 'realtime' && versionData.advancedConfig) {
+                loadAdvancedConfig(versionData.advancedConfig);
+                console.log('✅ 고급 설정 불러옴:', versionData.advancedConfig);
             }
         }
 
@@ -1536,14 +1776,22 @@
         async function testRealtime(instructions) {
             const model = document.getElementById('realtime-model').value;
             const voice = document.getElementById('realtime-voice').value;
+            const advancedConfig = getAdvancedConfig();  // 고급 설정 가져오기
             const startTime = Date.now();
+            
+            console.log('🔐 토큰 발급 요청:', {
+                model,
+                voice,
+                advancedConfig
+            });
             
             const response = await fetch(`${API_BASE_URL}/api/realtime/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: 'playground_test_user',
-                    sessionConfig: { model, voice, instructions }
+                    sessionConfig: { model, voice, instructions },
+                    advancedConfig: advancedConfig  // 고급 설정 포함
                 })
             });
             
@@ -2071,6 +2319,188 @@
         }
 
         // ============================================
+        // 고급 설정 관리
+        // ============================================
+
+        // 고급 설정 기본값
+        const DEFAULT_ADVANCED_CONFIG = {
+            temperature: 0.8,
+            speed: 1.0,
+            threshold: 0.5,
+            prefix_padding_ms: 300,
+            silence_duration_ms: 200,
+            idle_timeout_ms: null,
+            max_output_tokens: 'inf',
+            noise_reduction: null,
+            truncation: 'auto'
+        };
+
+        // 프리셋 정의
+        const REALTIME_PRESETS = {
+            balanced: {
+                name: '⚖️ 기본 (Balanced)',
+                config: {
+                    temperature: 0.8,
+                    speed: 1.0,
+                    threshold: 0.5,
+                    prefix_padding_ms: 300,
+                    silence_duration_ms: 200,
+                    max_output_tokens: 'inf',
+                    noise_reduction: null,
+                    truncation: 'auto'
+                }
+            },
+            fast_response: {
+                name: '⚡ 빠른 응답 (Fast Response)',
+                config: {
+                    temperature: 0.6,
+                    speed: 1.2,
+                    threshold: 0.3,  // 더 민감하게
+                    prefix_padding_ms: 200,
+                    silence_duration_ms: 100,  // 빠른 반응
+                    max_output_tokens: 'inf',
+                    noise_reduction: true,
+                    truncation: 'auto'
+                }
+            },
+            high_quality: {
+                name: '✨ 높은 품질 (High Quality)',
+                config: {
+                    temperature: 0.9,
+                    speed: 0.9,
+                    threshold: 0.6,  // 덜 민감하게
+                    prefix_padding_ms: 400,
+                    silence_duration_ms: 300,  // 여유있게
+                    max_output_tokens: 'inf',
+                    noise_reduction: true,
+                    truncation: 'disabled'
+                }
+            },
+            custom: {
+                name: '🎨 커스텀 (Custom)',
+                config: null  // 사용자가 직접 설정
+            }
+        };
+
+        // 고급 설정 토글
+        function toggleAdvancedSettings() {
+            const settingsDiv = document.getElementById('realtime-advanced-settings');
+            const toggleBtn = document.getElementById('advanced-settings-toggle');
+            
+            if (settingsDiv.style.display === 'none') {
+                settingsDiv.style.display = 'block';
+                toggleBtn.textContent = '▼ 고급 설정 (Advanced Settings)';
+            } else {
+                settingsDiv.style.display = 'none';
+                toggleBtn.textContent = '▶ 고급 설정 (Advanced Settings)';
+            }
+        }
+
+        // 슬라이더 값 업데이트
+        function updateSliderValue(sliderId) {
+            const slider = document.getElementById(sliderId);
+            const valueSpan = document.getElementById(`${sliderId}-value`);
+            
+            let value = parseFloat(slider.value);
+            
+            // 표시 형식 지정
+            if (sliderId.includes('speed')) {
+                valueSpan.textContent = value.toFixed(1) + 'x';
+            } else if (sliderId.includes('ms')) {
+                valueSpan.textContent = Math.round(value) + 'ms';
+            } else {
+                valueSpan.textContent = value.toFixed(1);
+            }
+
+            // 프리셋을 Custom으로 변경
+            document.getElementById('realtime-preset').value = 'custom';
+        }
+
+        // 프리셋 적용
+        function applyRealtimePreset(presetName) {
+            if (presetName === 'custom') return;
+            
+            const preset = REALTIME_PRESETS[presetName];
+            if (!preset || !preset.config) return;
+            
+            const config = preset.config;
+            
+            // UI 업데이트
+            document.getElementById('realtime-temperature').value = config.temperature;
+            document.getElementById('realtime-speed').value = config.speed;
+            document.getElementById('realtime-threshold').value = config.threshold;
+            document.getElementById('realtime-prefix-padding').value = config.prefix_padding_ms;
+            document.getElementById('realtime-silence-duration').value = config.silence_duration_ms;
+            document.getElementById('realtime-max-tokens').value = config.max_output_tokens;
+            document.getElementById('realtime-truncation').value = config.truncation;
+            document.getElementById('realtime-noise-reduction').checked = config.noise_reduction === true;
+            
+            // 값 표시 업데이트
+            updateSliderValue('realtime-temperature');
+            updateSliderValue('realtime-speed');
+            updateSliderValue('realtime-threshold');
+            updateSliderValue('realtime-prefix-padding');
+            updateSliderValue('realtime-silence-duration');
+            
+            console.log(`✅ 프리셋 적용: ${preset.name}`);
+        }
+
+        // 고급 설정 기본값으로 리셋
+        function resetAdvancedSettings() {
+            applyRealtimePreset('balanced');
+            document.getElementById('realtime-preset').value = 'balanced';
+            alert('✅ 고급 설정을 기본값으로 리셋했습니다.');
+        }
+
+        // 현재 고급 설정 가져오기
+        function getAdvancedConfig() {
+            return {
+                temperature: parseFloat(document.getElementById('realtime-temperature').value),
+                speed: parseFloat(document.getElementById('realtime-speed').value),
+                threshold: parseFloat(document.getElementById('realtime-threshold').value),
+                prefix_padding_ms: parseInt(document.getElementById('realtime-prefix-padding').value),
+                silence_duration_ms: parseInt(document.getElementById('realtime-silence-duration').value),
+                idle_timeout_ms: null,  // 고정값
+                max_output_tokens: document.getElementById('realtime-max-tokens').value === 'inf' ? 
+                    'inf' : parseInt(document.getElementById('realtime-max-tokens').value),
+                noise_reduction: document.getElementById('realtime-noise-reduction').checked ? true : null,
+                truncation: document.getElementById('realtime-truncation').value
+            };
+        }
+
+        // 고급 설정 UI에 반영
+        function loadAdvancedConfig(config) {
+            if (!config || Object.keys(config).length === 0) {
+                config = DEFAULT_ADVANCED_CONFIG;
+            }
+            
+            document.getElementById('realtime-temperature').value = config.temperature || 0.8;
+            document.getElementById('realtime-speed').value = config.speed || 1.0;
+            document.getElementById('realtime-threshold').value = config.threshold || 0.5;
+            document.getElementById('realtime-prefix-padding').value = config.prefix_padding_ms || 300;
+            document.getElementById('realtime-silence-duration').value = config.silence_duration_ms || 200;
+            document.getElementById('realtime-max-tokens').value = config.max_output_tokens || 'inf';
+            document.getElementById('realtime-truncation').value = config.truncation || 'auto';
+            document.getElementById('realtime-noise-reduction').checked = config.noise_reduction === true;
+            
+            // 값 표시 업데이트
+            updateSliderValue('realtime-temperature');
+            updateSliderValue('realtime-speed');
+            updateSliderValue('realtime-threshold');
+            updateSliderValue('realtime-prefix-padding');
+            updateSliderValue('realtime-silence-duration');
+        }
+
+        // 커스텀 프리셋으로 저장
+        function saveAdvancedSettingsToPreset() {
+            const config = getAdvancedConfig();
+            REALTIME_PRESETS.custom.config = config;
+            
+            alert('✅ 현재 설정을 커스텀 프리셋으로 저장했습니다!\n\n프리셋 선택에서 "커스텀"을 선택하면 이 설정을 다시 불러올 수 있습니다.');
+            console.log('💾 저장된 커스텀 프리셋:', config);
+        }
+
+        // ============================================
         // 초기화
         // ============================================
 
@@ -2080,6 +2510,9 @@
             
             // 첫 번째 탭 로드 (DB에서 가져오기)
             await loadPromptForTab('organize-diary');
+            
+            // 고급 설정 초기화 (기본값으로)
+            loadAdvancedConfig(DEFAULT_ADVANCED_CONFIG);
             
             // 모든 캐릭터 카운터 이벤트 리스너 추가
             const textareas = document.querySelectorAll('textarea');
@@ -2093,7 +2526,7 @@
             // 저장 공간 사용량 표시
             updateStorageUsage();
             
-            console.log('✅ 프롬프트 플레이그라운드 초기화 완료! (DB 연동)');
+            console.log('✅ 프롬프트 플레이그라운드 초기화 완료! (DB 연동 + 고급 설정)');
         });
     </script>
 </body>

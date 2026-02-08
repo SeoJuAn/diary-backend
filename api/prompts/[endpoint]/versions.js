@@ -51,13 +51,13 @@ export default async function handler(req, res) {
         version, 
         name, 
         prompt,
+        advanced_config as "advancedConfig",
         is_default as "isDefault",
-        is_deletable as "isDeletable",
         is_current as "isCurrent",
         description,
         created_at as "createdAt",
         updated_at as "updatedAt"
-      FROM diary.prompt_versions
+      FROM prompt_versions
       WHERE endpoint = $1
       ORDER BY version`,
       [endpoint]
