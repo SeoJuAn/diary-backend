@@ -163,26 +163,35 @@ class RealtimeWebRTCClient {
       const response = await historyApi.getHistory({
         date: args.date as string | undefined,
         keyword: args.keyword as string | undefined,
-        limit: (args.limit as number) || 5,
+        limit: Math.min((args.limit as number) || 5, 10),
       });
 
       const sessions = response.data.sessions || [];
       const resultText =
         sessions.length === 0
-          ? "이전 대화 기록이 없습니다."
+          ? "해당 날짜/키워드의 이전 대화 기록이 없습니다."
           : sessions
+              .slice(0, 5)
               .map(
                 (s: {
                   started_at: string;
                   one_liner?: string;
                   keywords?: string[];
                   emotions?: string[];
+                  context_summary?: string;
                 }) => {
-                  const date = new Date(s.started_at).toLocaleDateString("ko-KR");
-                  return `[${date}] ${s.one_liner || "기록 없음"} (키워드: ${(s.keywords || []).join(", ")})`;
+                  const date = new Date(s.started_at).toLocaleDateString("ko-KR", {
+                    year: "numeric", month: "long", day: "numeric", weekday: "short",
+                  });
+                  const keywords = (s.keywords || []).join(", ") || "없음";
+                  const emotions = (s.emotions || []).join(", ") || "없음";
+                  const context = s.context_summary
+                    ? `\n  맥락: ${s.context_summary.slice(0, 100)}`
+                    : "";
+                  return `[${date}]\n  요약: ${s.one_liner || "기록 없음"}\n  키워드: ${keywords}\n  감정: ${emotions}${context}`;
                 }
               )
-              .join("\n");
+              .join("\n\n");
 
       // tool result를 DataChannel로 전송
       this.sendEvent({

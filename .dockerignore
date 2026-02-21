@@ -1,0 +1,31 @@
+# 환경변수 파일 (빌드 컨텍스트 제외)
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# Node (프론트엔드는 별도 Dockerfile에서 처리)
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+
+# macOS
+.DS_Store
+
+# 에디터
+.idea/
+.vscode/
+*.swp

@@ -13,7 +13,8 @@ export interface Message {
 
 export interface User {
   id: string;
-  email: string;
+  email?: string;
+  username?: string;
   nickname?: string;
 }
 

@@ -9,7 +9,6 @@ import { useAppStore } from "@/store/useAppStore";
 export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAppStore((s) => s.setAuth);
-
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,11 +21,11 @@ export default function LoginPage() {
       const res = await authApi.login(form);
       const { user, accessToken, refreshToken } = res.data;
       setAuth(user, accessToken, refreshToken);
-      router.push("/record");
+      router.push("/home");
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
-        "로그인 중 오류가 발생했습니다.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail || "로그인 중 오류가 발생했습니다.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -34,76 +33,103 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-dvh px-6 pt-20 pb-10" style={{ backgroundColor: "var(--color-bg)" }}>
-      <div className="flex flex-col items-center mb-12">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-md"
-          style={{ backgroundColor: "var(--color-primary)" }}
-        >
-          <span className="text-white text-2xl">📖</span>
+    <div style={{
+      width: "100%", height: "100%",
+      background: "linear-gradient(160deg, #1e1040 0%, #150d30 60%, #0d1a3a 100%)",
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      padding: "0 24px", gap: "24px", position: "relative", overflow: "hidden",
+    }}>
+      {/* 배경 글로우 */}
+      <div style={{ position: "absolute", top: "-60px", right: "-60px", width: "200px", height: "200px", borderRadius: "50%", background: "rgba(124,92,252,0.25)", filter: "blur(60px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: "40px", left: "-40px", width: "150px", height: "150px", borderRadius: "50%", background: "rgba(99,102,241,0.20)", filter: "blur(50px)", pointerEvents: "none" }} />
+
+      {/* 로고 */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", zIndex: 1 }}>
+        <div style={{
+          width: "64px", height: "64px", borderRadius: "20px",
+          background: "linear-gradient(135deg, #7C5CFC, #a78bfa)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 8px 32px rgba(124,92,252,0.55)", fontSize: "26px",
+        }}>📖</div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "20px", fontWeight: 700, color: "#f0eeff" }}>다이어리</div>
+          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>AI와 함께하는 하루 기록</div>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">다이어리</h1>
-        <p className="text-sm text-gray-500 mt-1">AI와 함께하는 하루 기록</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            아이디
-          </label>
-          <input
-            type="text"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
-            placeholder="아이디를 입력하세요"
-            required
-            className="w-full px-4 py-3.5 rounded-2xl bg-white text-gray-900 text-sm outline-none transition-all"
-            style={{ border: "1.5px solid var(--color-border)" }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-          />
+      {/* Glass 폼 카드 */}
+      <div style={{
+        width: "100%", zIndex: 1,
+        background: "rgba(255,255,255,0.08)",
+        backdropFilter: "blur(24px) saturate(160%)",
+        WebkitBackdropFilter: "blur(24px) saturate(160%)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        borderRadius: "24px",
+        padding: "20px",
+        display: "flex", flexDirection: "column", gap: "14px",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
+      }}>
+        {/* 아이디 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+          <label style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.5)", paddingLeft: "2px" }}>아이디</label>
+          <div style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            background: "rgba(255,255,255,0.07)", borderRadius: "14px",
+            padding: "11px 14px", border: "1px solid rgba(255,255,255,0.10)",
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.8)" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+            <input type="text" value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit(e)}
+              placeholder="아이디를 입력하세요"
+              style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "#f0eeff" }}
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            비밀번호
-          </label>
-          <input
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            placeholder="비밀번호를 입력하세요"
-            required
-            className="w-full px-4 py-3.5 rounded-2xl bg-white text-gray-900 text-sm outline-none transition-all"
-            style={{ border: "1.5px solid var(--color-border)" }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-          />
+        {/* 비밀번호 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+          <label style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.5)", paddingLeft: "2px" }}>비밀번호</label>
+          <div style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            background: "rgba(255,255,255,0.07)", borderRadius: "14px",
+            padding: "11px 14px", border: "1px solid rgba(255,255,255,0.10)",
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.8)" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <input type="password" value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit(e)}
+              placeholder="비밀번호를 입력하세요"
+              style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "#f0eeff" }}
+            />
+          </div>
         </div>
 
         {error && (
-          <p className="text-sm text-red-500 text-center">{error}</p>
+          <div style={{ background: "rgba(248,113,113,0.12)", borderRadius: "12px", padding: "8px 12px", fontSize: "12px", color: "#fca5a5", textAlign: "center", border: "1px solid rgba(248,113,113,0.2)" }}>
+            {error}
+          </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-4 rounded-2xl text-white font-semibold text-base mt-2 transition-opacity disabled:opacity-60"
-          style={{ backgroundColor: "var(--color-primary)" }}
-        >
+        <button type="button" onClick={handleSubmit} disabled={loading} style={{
+          width: "100%", padding: "13px", borderRadius: "14px", border: "none",
+          background: "linear-gradient(135deg, #7C5CFC, #a78bfa)",
+          color: "white", fontSize: "14px", fontWeight: 700,
+          cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.65 : 1,
+          boxShadow: "0 4px 20px rgba(124,92,252,0.45)", marginTop: "2px",
+        }}>
           {loading ? "로그인 중..." : "로그인"}
         </button>
-      </form>
+      </div>
 
-      <p className="text-center text-sm text-gray-500 mt-6">
-        아직 계정이 없으신가요?{" "}
-        <Link
-          href="/register"
-          className="font-semibold"
-          style={{ color: "var(--color-primary)" }}
-        >
-          회원가입
-        </Link>
+      <p style={{ textAlign: "center", fontSize: "12px", color: "rgba(255,255,255,0.4)", zIndex: 1 }}>
+        계정이 없으신가요?{" "}
+        <Link href="/register" style={{ color: "#a78bfa", fontWeight: 700 }}>회원가입</Link>
       </p>
     </div>
   );

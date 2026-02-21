@@ -1,9 +1,11 @@
+import logging
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from app.database import query_one, execute
 from app.auth_utils import hash_password, verify_password, sign_access_token, sign_refresh_token, verify_refresh_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+logger = logging.getLogger("auth")
 
 
 class RegisterRequest(BaseModel):
@@ -30,6 +32,7 @@ def _user_response(row) -> dict:
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(body: RegisterRequest):
+    logger.info(f"📋 회원가입 요청 — username={body.username}")
     if not body.username or len(body.username.strip()) == 0:
         raise HTTPException(status_code=400, detail="아이디를 입력해주세요.")
 
@@ -50,22 +53,26 @@ async def register(body: RegisterRequest):
     user = _user_response(row)
     access_token = sign_access_token(user["id"], user["email"], user["nickname"])
     refresh_token = sign_refresh_token(user["id"], user["email"], user["nickname"])
+    logger.info(f"✅ 회원가입 완료 — userId={user['id']}, username={body.username}")
 
     return {"success": True, "user": user, "accessToken": access_token, "refreshToken": refresh_token}
 
 
 @router.post("/login")
 async def login(body: LoginRequest):
+    logger.info(f"🔑 로그인 요청 — username={body.username}")
     row = await query_one(
         "SELECT id, email, nickname, password_hash FROM users WHERE email = $1",
         body.username.strip(),
     )
     if not row or not verify_password(body.password, row["password_hash"]):
+        logger.warning(f"⚠️  로그인 실패 — username={body.username} (잘못된 자격증명)")
         raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
 
     user = _user_response(row)
     access_token = sign_access_token(user["id"], user["email"], user["nickname"])
     refresh_token = sign_refresh_token(user["id"], user["email"], user["nickname"])
+    logger.info(f"✅ 로그인 성공 — userId={user['id']}, username={body.username}")
 
     return {"success": True, "user": user, "accessToken": access_token, "refreshToken": refresh_token}
 

@@ -51,7 +51,7 @@ async def get_history(
     if keyword:
         conditions.append(
             f"(cs.one_liner ILIKE ${idx} OR cs.context_summary ILIKE ${idx} "
-            f"OR cs.keywords::text ILIKE ${idx})"
+            f"OR cs.keywords_text ILIKE ${idx})"
         )
         params.append(f"%{keyword}%")
         idx += 1
@@ -61,7 +61,8 @@ async def get_history(
         f"""SELECT cs.id, cs.session_id, cs.started_at, cs.ended_at,
                    cs.duration_seconds, cs.message_count,
                    cs.one_liner, cs.daily_highlights, cs.goal_tracking,
-                   cs.gratitude, cs.emotions, cs.keywords, cs.main_topics
+                   cs.gratitude, cs.emotions, cs.keywords, cs.main_topics,
+                   cs.context_summary
             FROM conversation_sessions cs
             WHERE {where}
             ORDER BY cs.started_at DESC

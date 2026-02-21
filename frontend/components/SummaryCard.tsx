@@ -48,26 +48,30 @@ export default function SummaryCard({
 
   return (
     <div
-      className={`bg-white rounded-2xl p-4 shadow-sm ${className}`}
-      style={{ border: "1px solid var(--color-border)" }}
+      className={className}
+      style={{
+        background: "rgba(255,255,255,0.07)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        borderRadius: "18px",
+        padding: "14px",
+        backdropFilter: "blur(12px)",
+      }}
     >
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">{icon}</span>
-          <span className="font-semibold text-sm text-gray-800">{title}</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+          <span style={{ fontSize: "17px" }}>{icon}</span>
+          <span style={{ fontWeight: 600, fontSize: "13px", color: "rgba(255,255,255,0.85)" }}>{title}</span>
         </div>
         {onSave && (
           <button
             onClick={() => (editing ? handleSave() : setEditing(true))}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            style={{ background: "none", border: "none", cursor: "pointer", padding: "2px" }}
           >
             {editing ? (
-              <span className="text-xs font-medium" style={{ color: "var(--color-primary)" }}>
-                저장
-              </span>
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#a78bfa" }}>저장</span>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
@@ -79,8 +83,8 @@ export default function SummaryCard({
       {/* 내용 */}
       {editing ? (
         isArray ? (
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-2">
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
               {(draft as string[]).map((tag, i) => (
                 <TagChip key={i} label={tag} onRemove={() => handleRemoveTag(i)} />
               ))}
@@ -89,8 +93,11 @@ export default function SummaryCard({
               type="text"
               placeholder="태그 입력 후 Enter"
               onKeyDown={handleAddTag}
-              className="w-full text-sm border-b border-gray-200 outline-none py-1 text-gray-700"
-              style={{ background: "transparent" }}
+              style={{
+                width: "100%", fontSize: "13px", outline: "none", padding: "4px 0",
+                borderBottom: "1px solid rgba(255,255,255,0.2)",
+                background: "transparent", color: "rgba(255,255,255,0.8)",
+              }}
             />
           </div>
         ) : (
@@ -98,21 +105,24 @@ export default function SummaryCard({
             value={draft as string}
             onChange={(e) => setDraft(e.target.value)}
             rows={3}
-            className="w-full text-sm text-gray-700 outline-none resize-none border-b border-gray-200 py-1"
-            style={{ background: "transparent" }}
+            style={{
+              width: "100%", fontSize: "13px", outline: "none", resize: "none",
+              padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.2)",
+              background: "transparent", color: "rgba(255,255,255,0.8)", lineHeight: 1.6,
+            }}
           />
         )
       ) : isArray ? (
-        <div className="flex flex-wrap gap-2">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
           {(value as string[]).length > 0 ? (
             (value as string[]).map((tag, i) => <TagChip key={i} label={tag} />)
           ) : (
-            <span className="text-sm text-gray-400">내용 없음</span>
+            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>내용 없음</span>
           )}
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed">
-          {(value as string) || <span className="text-gray-400">내용 없음</span>}
+        <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.7)", lineHeight: 1.65, margin: 0 }}>
+          {(value as string) || <span style={{ color: "rgba(255,255,255,0.3)" }}>내용 없음</span>}
         </p>
       )}
     </div>
