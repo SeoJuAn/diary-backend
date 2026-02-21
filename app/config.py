@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     jwt_access_expires_in: int = 3600       # 1h in seconds
     jwt_refresh_expires_in: int = 604800    # 7d in seconds
 
+    # Tavily (웹 검색)
+    tavily_api_key: str = ""
+
     # On-premise LLM (optional)
     onpremise_llm_url: str = "https://api.kpmgpoc-samsungfire.com/v1"
     onpremise_llm_model: str = "LFM2-2.6B-Exp-Q8_0.gguf"

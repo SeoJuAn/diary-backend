@@ -68,7 +68,7 @@ export default function RegisterPage() {
       }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
           <label style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.5)", paddingLeft: "2px" }}>아이디</label>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(255,255,255,0.07)", borderRadius: "14px", padding: "11px 14px", border: "1px solid rgba(255,255,255,0.10)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(255,255,255,0.07)", borderRadius: "14px", padding: "7px 14px", border: "1px solid rgba(255,255,255,0.10)" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.8)" strokeWidth="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
             </svg>
@@ -83,7 +83,7 @@ export default function RegisterPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
           <label style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.5)", paddingLeft: "2px" }}>비밀번호</label>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(255,255,255,0.07)", borderRadius: "14px", padding: "11px 14px", border: "1px solid rgba(255,255,255,0.10)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(255,255,255,0.07)", borderRadius: "14px", padding: "7px 14px", border: "1px solid rgba(255,255,255,0.10)" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.8)" strokeWidth="2">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
@@ -103,7 +103,7 @@ export default function RegisterPage() {
         )}
 
         <button type="button" onClick={handleSubmit} disabled={loading} style={{
-          width: "100%", padding: "13px", borderRadius: "14px", border: "none",
+          width: "100%", padding: "9px", borderRadius: "14px", border: "none",
           background: "linear-gradient(135deg, #7C5CFC, #a78bfa)",
           color: "white", fontSize: "14px", fontWeight: 700,
           cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.65 : 1,

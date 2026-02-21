@@ -5,7 +5,7 @@ import time
 
 from app.log_handler import setup_logging
 from app.database import get_pool, close_pool
-from app.routers import auth, realtime, diary, context, audio, conversations, presets, prompts
+from app.routers import auth, realtime, diary, context, audio, conversations, presets, prompts, search
 from app.routers import logs as logs_router
 
 # ── 로깅 시스템 초기화 (가장 먼저) ─────────────────────────────────────────────
@@ -66,6 +66,7 @@ app.include_router(audio.router)
 app.include_router(conversations.router)
 app.include_router(presets.router)
 app.include_router(prompts.router)
+app.include_router(search.router)
 app.include_router(logs_router.router)
 
 

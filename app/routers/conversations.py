@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Query
+from datetime import date as date_type
+from fastapi import APIRouter, Depends, Query, HTTPException
 from app.dependencies import get_current_user
 from app.database import query, query_one
 
@@ -44,8 +45,12 @@ async def get_history(
     idx = 2
 
     if date:
-        conditions.append(f"DATE(cs.started_at AT TIME ZONE 'Asia/Seoul') = ${idx}::date")
-        params.append(date)
+        try:
+            date_obj = date_type.fromisoformat(date)  # '2026-02-20' → date(2026, 2, 20)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"날짜 형식이 올바르지 않습니다: {date} (YYYY-MM-DD 형식 사용)")
+        conditions.append(f"DATE(cs.started_at AT TIME ZONE 'Asia/Seoul') = ${idx}")
+        params.append(date_obj)
         idx += 1
 
     if keyword:

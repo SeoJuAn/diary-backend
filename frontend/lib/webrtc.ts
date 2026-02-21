@@ -143,6 +143,8 @@ class RealtimeWebRTCClient {
 
         if (name === "get_conversation_history") {
           await this.handleHistoryToolCall(callId, args);
+        } else if (name === "web_search") {
+          await this.handleWebSearchToolCall(callId, args);
         }
         break;
       }
@@ -213,6 +215,58 @@ class RealtimeWebRTCClient {
           type: "function_call_output",
           call_id: callId,
           output: "이전 대화 기록을 불러오는 데 실패했습니다.",
+        },
+      });
+      this.sendEvent({ type: "response.create" });
+    }
+  }
+
+  private async handleWebSearchToolCall(
+    callId: string,
+    args: Record<string, unknown>
+  ) {
+    const query = (args.query as string) || "";
+    try {
+      const response = await fetch("/api/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+        body: JSON.stringify({ query, max_results: 5 }),
+      });
+
+      if (!response.ok) throw new Error(`search failed: ${response.status}`);
+      const data = await response.json();
+
+      // AI에 주입할 컴팩트 포맷
+      let resultText = "";
+      if (data.answer) {
+        resultText += `요약 답변: ${data.answer}\n\n`;
+      }
+      if (data.results?.length > 0) {
+        resultText += "검색 결과:\n" + data.results
+          .slice(0, 3)
+          .map((r: { title: string; content: string; url: string }) =>
+            `- ${r.title}\n  ${r.content}\n  출처: ${r.url}`
+          )
+          .join("\n\n");
+      }
+      if (!resultText) resultText = "검색 결과를 찾을 수 없습니다.";
+
+      this.sendEvent({
+        type: "conversation.item.create",
+        item: { type: "function_call_output", call_id: callId, output: resultText },
+      });
+      this.sendEvent({ type: "response.create" });
+    } catch (err) {
+      console.error("Web search tool call failed:", err);
+      this.sendEvent({
+        type: "conversation.item.create",
+        item: {
+          type: "function_call_output",
+          call_id: callId,
+          output: "웹 검색 중 오류가 발생했습니다.",
         },
       });
       this.sendEvent({ type: "response.create" });
