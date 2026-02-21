@@ -7,6 +7,8 @@
     "node": "22.x"
   },
   "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,8 +16,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "express": "^5.1.0",
     "formidable": "^3.5.4",
+    "jsonwebtoken": "^9.0.3",
     "openai": "^6.9.1",
     "pg": "^8.16.3"
   }

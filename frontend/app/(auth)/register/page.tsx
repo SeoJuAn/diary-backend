@@ -1,0 +1,164 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { authApi } from "@/lib/api";
+import { useAppStore } from "@/store/useAppStore";
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const setAuth = useAppStore((s) => s.setAuth);
+
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    passwordConfirm: "",
+    nickname: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (form.password !== form.passwordConfirm) {
+      setError("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await authApi.register({
+        email: form.email,
+        password: form.password,
+        nickname: form.nickname || undefined,
+      });
+      const { user, accessToken, refreshToken } = res.data;
+      setAuth(user, accessToken, refreshToken);
+      router.push("/record");
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        "회원가입 중 오류가 발생했습니다.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputStyle = {
+    border: "1.5px solid var(--color-border)",
+  };
+
+  return (
+    <div className="flex flex-col min-h-dvh px-6 pt-16 pb-10" style={{ backgroundColor: "var(--color-bg)" }}>
+      {/* 헤더 */}
+      <div className="flex flex-col items-center mb-10">
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-md"
+          style={{ backgroundColor: "var(--color-primary)" }}
+        >
+          <span className="text-white text-2xl">📖</span>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">회원가입</h1>
+        <p className="text-sm text-gray-500 mt-1">새 계정을 만들어보세요</p>
+      </div>
+
+      {/* 폼 */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            닉네임 <span className="text-gray-400 font-normal">(선택)</span>
+          </label>
+          <input
+            type="text"
+            value={form.nickname}
+            onChange={(e) => setForm({ ...form, nickname: e.target.value })}
+            placeholder="사용할 이름을 입력하세요"
+            className="w-full px-4 py-3.5 rounded-2xl bg-white text-gray-900 text-sm outline-none transition-all"
+            style={inputStyle}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            이메일
+          </label>
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            placeholder="example@email.com"
+            required
+            className="w-full px-4 py-3.5 rounded-2xl bg-white text-gray-900 text-sm outline-none transition-all"
+            style={inputStyle}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            비밀번호
+          </label>
+          <input
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            placeholder="6자 이상 입력하세요"
+            required
+            className="w-full px-4 py-3.5 rounded-2xl bg-white text-gray-900 text-sm outline-none transition-all"
+            style={inputStyle}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            비밀번호 확인
+          </label>
+          <input
+            type="password"
+            value={form.passwordConfirm}
+            onChange={(e) => setForm({ ...form, passwordConfirm: e.target.value })}
+            placeholder="비밀번호를 다시 입력하세요"
+            required
+            className="w-full px-4 py-3.5 rounded-2xl bg-white text-gray-900 text-sm outline-none transition-all"
+            style={inputStyle}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
+
+        {error && (
+          <p className="text-sm text-red-500 text-center">{error}</p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-4 rounded-2xl text-white font-semibold text-base mt-2 transition-opacity disabled:opacity-60"
+          style={{ backgroundColor: "var(--color-primary)" }}
+        >
+          {loading ? "가입 중..." : "가입하기"}
+        </button>
+      </form>
+
+      <p className="text-center text-sm text-gray-500 mt-6">
+        이미 계정이 있으신가요?{" "}
+        <Link
+          href="/login"
+          className="font-semibold"
+          style={{ color: "var(--color-primary)" }}
+        >
+          로그인
+        </Link>
+      </p>
+    </div>
+  );
+}
