@@ -1,12 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   async rewrites() {
-    // 로컬 개발 시에만 백엔드 서버(3001)로 프록시
-    // Vercel 배포 시에는 /api/* 가 루트의 api/ Serverless Functions로 자동 라우팅되므로 불필요
-    if (process.env.NODE_ENV !== "development") return [];
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    // 서버 전용 환경변수 사용 (빌드 타임이 아닌 런타임에 평가됨)
+    // Docker: FASTAPI_URL=http://fastapi:8000
+    // 로컬 개발: FASTAPI_URL=http://localhost:8000
+    const apiUrl = process.env.FASTAPI_URL || "http://fastapi:8000";
     return [
       {
         source: "/api/:path*",

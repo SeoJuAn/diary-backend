@@ -1,0 +1,39 @@
+services:
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: diary-fastapi
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "8000:8000"
+    networks:
+      - diary-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  nextjs:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: diary-nextjs
+    restart: unless-stopped
+    environment:
+      - FASTAPI_URL=http://fastapi:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - diary-network
+    depends_on:
+      fastapi:
+        condition: service_healthy
+
+networks:
+  diary-network:
+    driver: bridge

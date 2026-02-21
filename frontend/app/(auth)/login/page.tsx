@@ -10,7 +10,7 @@ export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAppStore((s) => s.setAuth);
 
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +25,7 @@ export default function LoginPage() {
       router.push("/record");
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
         "로그인 중 오류가 발생했습니다.";
       setError(msg);
     } finally {
@@ -35,7 +35,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col min-h-dvh px-6 pt-20 pb-10" style={{ backgroundColor: "var(--color-bg)" }}>
-      {/* 로고 영역 */}
       <div className="flex flex-col items-center mb-12">
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-md"
@@ -47,17 +46,16 @@ export default function LoginPage() {
         <p className="text-sm text-gray-500 mt-1">AI와 함께하는 하루 기록</p>
       </div>
 
-      {/* 폼 */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            이메일
+            아이디
           </label>
           <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            placeholder="example@email.com"
+            type="text"
+            value={form.username}
+            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            placeholder="아이디를 입력하세요"
             required
             className="w-full px-4 py-3.5 rounded-2xl bg-white text-gray-900 text-sm outline-none transition-all"
             style={{ border: "1.5px solid var(--color-border)" }}

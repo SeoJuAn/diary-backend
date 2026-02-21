@@ -20,7 +20,7 @@
     "express": "^5.1.0",
     "formidable": "^3.5.4",
     "jsonwebtoken": "^9.0.3",
-    "next": "^16.1.6",
+    "next": "^15.3.3",
     "openai": "^6.9.1",
     "pg": "^8.16.3"
   }

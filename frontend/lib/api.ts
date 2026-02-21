@@ -111,9 +111,9 @@ api.interceptors.response.use(
 
 // ── Auth ──
 export const authApi = {
-  register: (data: { email: string; password: string; nickname?: string }) =>
+  register: (data: { username: string; password: string }) =>
     api.post("/api/auth/register", data),
-  login: (data: { email: string; password: string }) =>
+  login: (data: { username: string; password: string }) =>
     api.post("/api/auth/login", data),
   refresh: (refreshToken: string) =>
     api.post("/api/auth/refresh", { refreshToken }),
