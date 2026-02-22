@@ -52,9 +52,12 @@ function getLevelClass(level: string): string {
   }
 }
 
-// Nginx → FastAPI로 /api/ 프록시 (SSE 포함)
 function getSseUrl(): string {
   if (typeof window === "undefined") return "http://localhost:8000/api/logs/stream";
+  // 로컬: Next.js가 SSE를 버퍼링하므로 FastAPI 직접 연결
+  // 서버: Nginx가 /api/ 를 FastAPI로 프록시
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocal) return `http://localhost:8000/api/logs/stream`;
   return `/api/logs/stream`;
 }
 
