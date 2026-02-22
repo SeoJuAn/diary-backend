@@ -52,11 +52,10 @@ function getLevelClass(level: string): string {
   }
 }
 
-// Next.js proxy를 우회하고 FastAPI에 직접 SSE 연결
-// (Next.js는 SSE 청크를 버퍼링하여 실시간 전달이 안 됨)
+// Nginx → FastAPI로 /api/ 프록시 (SSE 포함)
 function getSseUrl(): string {
   if (typeof window === "undefined") return "http://localhost:8000/api/logs/stream";
-  return `${window.location.protocol}//${window.location.hostname}:8000/api/logs/stream`;
+  return `/api/logs/stream`;
 }
 
 // ── 로그 탭 ───────────────────────────────────────────────────────────────────
@@ -110,10 +109,7 @@ function LogsTab() {
   }, [logs, autoScroll]);
 
   const clearLogs = async () => {
-    const base = typeof window !== "undefined"
-      ? `${window.location.protocol}//${window.location.hostname}:8000`
-      : "http://localhost:8000";
-    await fetch(`${base}/api/logs/clear`, { method: "DELETE" });
+    await fetch(`/api/logs/clear`, { method: "DELETE" });
     setLogs([]);
   };
 
