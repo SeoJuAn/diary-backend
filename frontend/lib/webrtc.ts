@@ -23,7 +23,7 @@ class RealtimeWebRTCClient {
 
   async connect(
     ephemeralToken: string,
-    model: string,
+    webrtcUrl: string,
     handlers: RTCEventHandler,
     accessToken: string
   ) {
@@ -57,17 +57,14 @@ class RealtimeWebRTCClient {
       const offer = await this.pc.createOffer();
       await this.pc.setLocalDescription(offer);
 
-      const sdpResponse = await fetch(
-        `https://api.openai.com/v1/realtime?model=${model}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${ephemeralToken}`,
-            "Content-Type": "application/sdp",
-          },
-          body: offer.sdp,
-        }
-      );
+      const sdpResponse = await fetch(webrtcUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${ephemeralToken}`,
+          "Content-Type": "application/sdp",
+        },
+        body: offer.sdp,
+      });
 
       if (!sdpResponse.ok) {
         throw new Error(`SDP 교환 실패: ${sdpResponse.status}`);

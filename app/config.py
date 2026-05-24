@@ -25,6 +25,16 @@ class Settings(BaseSettings):
     onpremise_llm_url: str = "https://api.kpmgpoc-samsungfire.com/v1"
     onpremise_llm_model: str = "LFM2-2.6B-Exp-Q8_0.gguf"
 
+    # Realtime provider 분기 ("openai" | "azure")
+    realtime_provider: str = "openai"
+
+    # Azure OpenAI (Foundry) — realtime_provider="azure"일 때만 사용
+    # endpoint는 host만 권장 (예: https://<resource>.cognitiveservices.azure.com).
+    # path/쿼리가 붙어와도 코드에서 scheme+host만 추출함.
+    azure_openai_endpoint: str = ""
+    azure_openai_key: str = ""
+    azure_realtime_deployment: str = "gpt-realtime-2"
+
     class Config:
         env_file = ".env"
         extra = "ignore"

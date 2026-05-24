@@ -1,12 +1,24 @@
 import json
 import uuid
 import logging
+from urllib.parse import urlsplit
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from app.dependencies import get_current_user
 from app.database import query_one, Transaction
 from app.config import settings
+
+
+def _azure_host() -> str:
+    """AZURE_OPENAI_ENDPOINT에서 scheme+host만 추출 (path/쿼리는 버림)."""
+    parsed = urlsplit(settings.azure_openai_endpoint)
+    if not parsed.scheme or not parsed.netloc:
+        raise HTTPException(
+            status_code=500,
+            detail="AZURE_OPENAI_ENDPOINT가 비어있거나 형식이 잘못되었습니다.",
+        )
+    return f"{parsed.scheme}://{parsed.netloc}"
 
 router = APIRouter(prefix="/api/realtime", tags=["realtime"])
 logger = logging.getLogger("realtime")
@@ -156,52 +168,112 @@ async def get_token(body: TokenRequest, current_user: dict = Depends(get_current
         f"silence={final_advanced['silence_duration_ms']}ms"
     )
 
-    # OpenAI Ephemeral Token 발급
-    payload = {
-        "model": body.sessionConfig.model,
-        "voice": body.sessionConfig.voice or "alloy",
-        "instructions": instructions,
-        "input_audio_transcription": {"model": "whisper-1"},
-        "turn_detection": {
-            "type": "server_vad",
-            "threshold": float(final_advanced["threshold"]),
-            "prefix_padding_ms": int(final_advanced["prefix_padding_ms"]),
-            "silence_duration_ms": int(final_advanced["silence_duration_ms"]),
-            "create_response": True,
-        },
-        "tools": TOOLS,
-        "tool_choice": "auto",
-    }
+    # provider 분기 — settings.realtime_provider ∈ {"openai", "azure"}
+    provider = (settings.realtime_provider or "openai").lower()
+    voice = body.sessionConfig.voice or "alloy"
 
-    logger.info(f"🌐 OpenAI Realtime API 호출 중 — POST /v1/realtime/sessions")
-    async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.post(
-            "https://api.openai.com/v1/realtime/sessions",
-            headers={
-                "Authorization": f"Bearer {settings.openai_api_key}",
-                "Content-Type": "application/json",
+    if provider == "azure":
+        host = _azure_host()
+        deployment = settings.azure_realtime_deployment
+        url = f"{host}/openai/v1/realtime/client_secrets"
+        # Azure GA 스키마: voice/transcription/turn_detection은 audio.input/output에 nested.
+        # flat 구조로 보내면 500 떨어짐.
+        session_payload = {
+            "session": {
+                "type": "realtime",
+                "model": deployment,
+                "instructions": instructions,
+                "audio": {
+                    "input": {
+                        "transcription": {"model": "whisper-1"},
+                        "turn_detection": {
+                            "type": "server_vad",
+                            "threshold": float(final_advanced["threshold"]),
+                            "prefix_padding_ms": int(final_advanced["prefix_padding_ms"]),
+                            "silence_duration_ms": int(final_advanced["silence_duration_ms"]),
+                            "create_response": True,
+                        },
+                    },
+                    "output": {"voice": voice},
+                },
+                "tools": TOOLS,
+                "tool_choice": "auto",
+            }
+        }
+        logger.info(f"🌐 Azure Realtime — POST {url} (deployment={deployment})")
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                url,
+                headers={
+                    "api-key": settings.azure_openai_key,
+                    "Content-Type": "application/json",
+                },
+                json=session_payload,
+            )
+        if not resp.is_success:
+            logger.error(f"❌ Azure Realtime 오류: {resp.status_code} — {resp.text[:300]}")
+            raise HTTPException(status_code=resp.status_code, detail=f"Azure Realtime 오류: {resp.text}")
+        data = resp.json()
+        token_value = data.get("value")
+        if not token_value:
+            logger.error(f"❌ Azure 응답에 토큰 없음: {data}")
+            raise HTTPException(status_code=502, detail="Azure 응답에 ephemeral token이 없습니다.")
+        session_obj = data.get("session") or {}
+        session_id = session_obj.get("id") or str(uuid.uuid4())
+        expires_at = data.get("expires_at")
+        webrtc_url = f"{host}/openai/v1/realtime?model={deployment}"
+        model_label = deployment
+    else:
+        # OpenAI (기본)
+        payload = {
+            "model": body.sessionConfig.model,
+            "voice": voice,
+            "instructions": instructions,
+            "input_audio_transcription": {"model": "whisper-1"},
+            "turn_detection": {
+                "type": "server_vad",
+                "threshold": float(final_advanced["threshold"]),
+                "prefix_padding_ms": int(final_advanced["prefix_padding_ms"]),
+                "silence_duration_ms": int(final_advanced["silence_duration_ms"]),
+                "create_response": True,
             },
-            json=payload,
-        )
+            "tools": TOOLS,
+            "tool_choice": "auto",
+        }
+        logger.info(f"🌐 OpenAI Realtime API 호출 중 — POST /v1/realtime/sessions")
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                "https://api.openai.com/v1/realtime/sessions",
+                headers={
+                    "Authorization": f"Bearer {settings.openai_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+        if not resp.is_success:
+            logger.error(f"❌ OpenAI API 오류: {resp.status_code} — {resp.text[:200]}")
+            raise HTTPException(status_code=resp.status_code, detail=f"OpenAI API 오류: {resp.text}")
+        data = resp.json()
+        session_id = data.get("id", str(uuid.uuid4()))
+        client_secret = data.get("client_secret") or {}
+        token_value = client_secret.get("value")
+        expires_at = client_secret.get("expires_at")
+        webrtc_url = f"https://api.openai.com/v1/realtime?model={body.sessionConfig.model}"
+        model_label = body.sessionConfig.model
 
-    if not resp.is_success:
-        logger.error(f"❌ OpenAI API 오류: {resp.status_code} — {resp.text[:200]}")
-        raise HTTPException(status_code=resp.status_code, detail=f"OpenAI API 오류: {resp.text}")
-
-    data = resp.json()
-    session_id = data.get("id", str(uuid.uuid4()))
-    expires_at = data["client_secret"].get("expires_at")
-    logger.info(f"✅ Ephemeral 토큰 발급 성공 — session={session_id}, expires={expires_at}")
-    logger.info(f"🔗 WebRTC 연결 준비 완료 — 클라이언트에 토큰 전달")
+    logger.info(f"✅ Ephemeral 토큰 발급 성공 — provider={provider}, session={session_id}, expires={expires_at}")
+    logger.info(f"🔗 WebRTC 연결 준비 완료 — webrtcUrl={webrtc_url}")
 
     return {
         "success": True,
-        "token": data["client_secret"]["value"],
+        "token": token_value,
         "sessionId": session_id,
         "expiresAt": expires_at,
+        "webrtcUrl": webrtc_url,
+        "provider": provider,
         "config": {
-            "model": body.sessionConfig.model,
-            "voice": body.sessionConfig.voice or "alloy",
+            "model": model_label,
+            "voice": voice,
             "advancedConfig": final_advanced,
         },
     }

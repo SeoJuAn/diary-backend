@@ -69,12 +69,12 @@ export default function RecordPage() {
       const tokenRes = await realtimeApi.getToken({
         sessionConfig: { model: "gpt-4o-realtime-preview-2024-12-17" },
       });
-      const { token, sessionId: sid } = tokenRes.data;
+      const { token, sessionId: sid, webrtcUrl } = tokenRes.data;
       setSessionId(sid);
 
       await realtimeClient.connect(
         token,
-        "gpt-4o-realtime-preview-2024-12-17",
+        webrtcUrl,
         {
           onStatusChange: (s) => setVoiceStatus(s),
           onUserTranscript: (text) => {
