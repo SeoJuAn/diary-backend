@@ -162,13 +162,13 @@ export const presetsApi = {
 
 // ── Organize Diary ──
 export const diaryApi = {
-  organize: (data: { text: string; llmProvider?: string }) =>
+  organize: (data: { text: string }) =>
     api.post("/api/organize-diary", data),
 };
 
 // ── Context Extract ──
 export const contextApi = {
-  extract: (data: { conversationText: string; llmProvider?: string }) =>
+  extract: (data: { conversationText: string }) =>
     api.post("/api/context/extract", data),
 };
 

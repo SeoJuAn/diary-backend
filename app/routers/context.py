@@ -1,12 +1,13 @@
+import logging
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from openai import AsyncOpenAI
 from app.dependencies import get_current_user
 from app.database import query_one
 from app.config import settings
 
 router = APIRouter(prefix="/api/context", tags=["context"])
+logger = logging.getLogger("context")
 
 DEFAULT_PROMPT = """다음 대화 내용을 분석하여 주요 컨텍스트를 추출해주세요:
 1. 대화의 주요 주제
@@ -20,7 +21,6 @@ DEFAULT_PROMPT = """다음 대화 내용을 분석하여 주요 컨텍스트를 
 
 class ExtractRequest(BaseModel):
     conversationText: str
-    llmProvider: str = "openai"
 
 
 @router.post("/extract")
@@ -37,29 +37,12 @@ async def extract_context(body: ExtractRequest, current_user: dict = Depends(get
     )
     system_prompt = row["prompt"] if row else DEFAULT_PROMPT
 
-    if body.llmProvider == "onpremise":
-        result = await _extract_onpremise(body.conversationText, system_prompt)
-    else:
-        result = await _extract_openai(body.conversationText, system_prompt)
-
+    result = await _extract_onpremise(body.conversationText, system_prompt)
     return {"success": True, "context": result}
 
 
-async def _extract_openai(text: str, system_prompt: str) -> str:
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    resp = await client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"다음 대화를 분석해주세요:\n\n{text}"},
-        ],
-        temperature=0.3,
-        max_tokens=1000,
-    )
-    return resp.choices[0].message.content or ""
-
-
 async def _extract_onpremise(text: str, system_prompt: str) -> str:
+    logger.info(f"🌐 sLLM 호출 — POST {settings.onpremise_llm_url}/chat/completions (model={settings.onpremise_llm_model})")
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
             f"{settings.onpremise_llm_url}/chat/completions",

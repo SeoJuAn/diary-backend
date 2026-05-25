@@ -1,13 +1,15 @@
 import json
+import logging
+import re
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from openai import AsyncOpenAI
 from app.dependencies import get_current_user
 from app.database import query_one
 from app.config import settings
 
 router = APIRouter(prefix="/api", tags=["diary"])
+logger = logging.getLogger("diary")
 
 DEFAULT_PROMPT = """당신은 친근하고 따뜻한 일기 작성 도우미입니다.
 사용자가 말한 내용을 바탕으로 구조화된 일기 요약을 생성해주세요.
@@ -19,53 +21,30 @@ DEFAULT_PROMPT = """당신은 친근하고 따뜻한 일기 작성 도우미입�
 4. 각 카테고리에 해당하는 내용이 없으면 빈 배열로 반환하세요
 5. 각 항목은 간결하게 2-4단어로 표현하세요
 6. oneLiner는 오늘 하루를 대표하는 한 문장으로 작성하세요
-7. fullDiary는 전체 내용을 자연스럽게 3-5문장으로 정리하세요"""
+7. fullDiary는 전체 내용을 자연스럽게 3-5문장으로 정리하세요
 
-JSON_SCHEMA = {
-    "name": "diary_summary",
-    "strict": True,
-    "schema": {
-        "type": "object",
-        "properties": {
-            "oneLiner": {"type": "string", "description": "오늘 하루를 대표하는 한 문장"},
-            "dailyHighlights": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "오늘의 주요 일상 이벤트 (2-4단어씩)",
-            },
-            "goalTracking": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "오늘의 목표 달성 현황 (2-4단어씩)",
-            },
-            "gratitude": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "감사하거나 행복했던 것들 (2-4단어씩)",
-            },
-            "emotions": {
-                "type": "array",
-                "items": {"type": "string"},
-                "description": "오늘 느낀 감정들 (1-2단어씩)",
-            },
-            "fullDiary": {"type": "string", "description": "전체 일기 내용 (3-5문장)"},
-        },
-        "required": ["oneLiner", "dailyHighlights", "goalTracking", "gratitude", "emotions", "fullDiary"],
-        "additionalProperties": False,
-    },
-}
+[출력 형식 — 매우 중요]
+응답은 반드시 아래 키만 포함한 JSON 객체 하나만 출력하세요. 코드블록, 설명, 인사말 모두 금지.
+{
+  "oneLiner": "...",
+  "dailyHighlights": ["..."],
+  "goalTracking": ["..."],
+  "gratitude": ["..."],
+  "emotions": ["..."],
+  "fullDiary": "..."
+}"""
+
+_EMPTY_SUMMARY_KEYS = ("dailyHighlights", "goalTracking", "gratitude", "emotions")
 
 
 class OrganizeRequest(BaseModel):
     text: str
-    llmProvider: str = "openai"
 
 
 @router.post("/organize-diary")
 async def organize_diary(body: OrganizeRequest, current_user: dict = Depends(get_current_user)):
     user_id = current_user["userId"]
 
-    # 사용자 프롬프트 조회 (사용자 설정 우선, 없으면 시스템 기본값)
     row = await query_one(
         """SELECT prompt FROM prompt_versions
            WHERE endpoint = 'organize-diary' AND is_current = true
@@ -76,29 +55,11 @@ async def organize_diary(body: OrganizeRequest, current_user: dict = Depends(get
     )
     system_prompt = row["prompt"] if row else DEFAULT_PROMPT
 
-    if body.llmProvider == "onpremise":
-        return await _organize_onpremise(body.text, system_prompt)
-    return await _organize_openai(body.text, system_prompt)
-
-
-async def _organize_openai(text: str, system_prompt: str) -> dict:
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    resp = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"다음 대화 내용을 바탕으로 일기를 작성해주세요:\n\n{text}"},
-        ],
-        response_format={"type": "json_schema", "json_schema": JSON_SCHEMA},
-        temperature=0.7,
-        max_tokens=2000,
-    )
-    raw = resp.choices[0].message.content or "{}"
-    summary = json.loads(raw)
-    return {"success": True, "summary": summary}
+    return await _organize_onpremise(body.text, system_prompt)
 
 
 async def _organize_onpremise(text: str, system_prompt: str) -> dict:
+    logger.info(f"🌐 sLLM 호출 — POST {settings.onpremise_llm_url}/chat/completions (model={settings.onpremise_llm_model})")
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
             f"{settings.onpremise_llm_url}/chat/completions",
@@ -106,7 +67,7 @@ async def _organize_onpremise(text: str, system_prompt: str) -> dict:
                 "model": settings.onpremise_llm_model,
                 "messages": [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"다음 대화 내용을 바탕으로 일기를 작성해주세요:\n\n{text}"},
+                    {"role": "user", "content": f"다음 대화 내용을 바탕으로 일기를 작성해주세요. JSON 객체 하나만 출력:\n\n{text}"},
                 ],
                 "temperature": 0.7,
                 "max_tokens": 2000,
@@ -114,8 +75,37 @@ async def _organize_onpremise(text: str, system_prompt: str) -> dict:
         )
     resp.raise_for_status()
     raw = resp.json()["choices"][0]["message"]["content"]
-    try:
-        summary = json.loads(raw)
-    except Exception:
-        summary = {"oneLiner": raw, "dailyHighlights": [], "goalTracking": [], "gratitude": [], "emotions": [], "fullDiary": raw}
+
+    # sLLM이 ```json ... ``` 으로 감싸거나 앞뒤 텍스트 붙일 수 있어 JSON 영역만 추출
+    summary = _safe_parse_summary(raw)
     return {"success": True, "summary": summary}
+
+
+def _safe_parse_summary(raw: str) -> dict:
+    """sLLM 출력에서 JSON object를 추출. 실패 시 raw 텍스트를 oneLiner+fullDiary로."""
+    candidate = raw.strip()
+    # ```json ... ``` 마크다운 코드블록 제거
+    m = re.search(r"```(?:json)?\s*(.*?)```", candidate, flags=re.DOTALL)
+    if m:
+        candidate = m.group(1).strip()
+    # 첫 { ... 마지막 } 만 잘라 시도
+    if "{" in candidate and "}" in candidate:
+        candidate = candidate[candidate.index("{"): candidate.rindex("}") + 1]
+    try:
+        parsed = json.loads(candidate)
+        # 필수 키 기본값 채움
+        for k in _EMPTY_SUMMARY_KEYS:
+            parsed.setdefault(k, [])
+        parsed.setdefault("oneLiner", "")
+        parsed.setdefault("fullDiary", raw)
+        return parsed
+    except Exception as e:
+        logger.warning(f"⚠️ sLLM JSON 파싱 실패 ({e}) — raw fallback")
+        return {
+            "oneLiner": raw[:120],
+            "dailyHighlights": [],
+            "goalTracking": [],
+            "gratitude": [],
+            "emotions": [],
+            "fullDiary": raw,
+        }
