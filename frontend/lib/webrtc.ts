@@ -94,8 +94,9 @@ class RealtimeWebRTCClient {
         this.handlers?.onStatusChange("listening");
         break;
 
-      // ── 사용자 발화 완성 transcript ──
+      // ── 사용자 발화 완성 transcript (OpenAI 옛 이름 + Azure GA) ──
       case "conversation.item.input_audio_transcription.completed":
+      case "conversation.item.input_audio_transcription.done":
         this.handlers?.onUserTranscript((event.transcript as string) || "");
         break;
 
@@ -105,26 +106,41 @@ class RealtimeWebRTCClient {
         this.assistantBuffer = "";
         break;
 
-      // ── AI 텍스트 delta ──
-      case "response.text.delta": {
+      // ── AI 응답 텍스트 delta (OpenAI 옛: response.text.delta / Azure GA: output_audio_transcript or output_text) ──
+      case "response.text.delta":
+      case "response.output_text.delta":
+      case "response.output_audio_transcript.delta":
+      case "response.audio_transcript.delta": {
         const delta = (event as { delta?: string }).delta || "";
         this.assistantBuffer += delta;
         this.handlers?.onAssistantTranscript(this.assistantBuffer, false);
         break;
       }
 
-      // ── AI 오디오 출력 시작 → speaking ──
+      // ── AI 오디오 출력 시작 → speaking (OpenAI 옛 + Azure GA) ──
       case "response.audio.started":
+      case "response.output_audio.started":
+      case "output_audio_buffer.started":
         this.handlers?.onStatusChange("speaking");
         break;
 
-      // ── AI 응답 텍스트 완성 ──
+      // ── AI 응답 텍스트 완성 (OpenAI 옛 + Azure GA) ──
       case "response.text.done":
+      case "response.output_text.done":
+      case "response.output_audio_transcript.done":
+      case "response.audio_transcript.done": {
+        const e = event as { text?: string; transcript?: string };
         this.handlers?.onAssistantTranscript(
-          (event as { text?: string }).text || this.assistantBuffer,
+          e.text || e.transcript || this.assistantBuffer,
           true
         );
         this.assistantBuffer = "";
+        break;
+      }
+
+      // ── AI 오디오 버퍼 종료 → listening (Azure) ──
+      case "output_audio_buffer.stopped":
+        this.handlers?.onStatusChange("listening");
         break;
 
       // ── AI 응답 완전 완료 → listening ──
