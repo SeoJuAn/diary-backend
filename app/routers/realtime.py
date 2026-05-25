@@ -226,6 +226,7 @@ async def get_token(body: TokenRequest, current_user: dict = Depends(get_current
         # DataChannel로 누출되는 걸 막음 (transcript/response 이벤트는 그대로 흐름).
         webrtc_url = f"{host}/openai/v1/realtime/calls?webrtcfilter=on"
         model_label = deployment
+        data_channel_name = "realtime-channel"
     else:
         # OpenAI (기본)
         payload = {
@@ -263,6 +264,7 @@ async def get_token(body: TokenRequest, current_user: dict = Depends(get_current
         expires_at = client_secret.get("expires_at")
         webrtc_url = f"https://api.openai.com/v1/realtime?model={body.sessionConfig.model}"
         model_label = body.sessionConfig.model
+        data_channel_name = "oai-events"
 
     logger.info(f"✅ Ephemeral 토큰 발급 성공 — provider={provider}, session={session_id}, expires={expires_at}")
     logger.info(f"🔗 WebRTC 연결 준비 완료 — webrtcUrl={webrtc_url}")
@@ -273,6 +275,7 @@ async def get_token(body: TokenRequest, current_user: dict = Depends(get_current
         "sessionId": session_id,
         "expiresAt": expires_at,
         "webrtcUrl": webrtc_url,
+        "dataChannelName": data_channel_name,
         "provider": provider,
         "config": {
             "model": model_label,

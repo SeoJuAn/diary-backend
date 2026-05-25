@@ -24,6 +24,7 @@ class RealtimeWebRTCClient {
   async connect(
     ephemeralToken: string,
     webrtcUrl: string,
+    dataChannelName: string,
     handlers: RTCEventHandler,
     accessToken: string
   ) {
@@ -47,7 +48,9 @@ class RealtimeWebRTCClient {
       stream.getTracks().forEach((t) => this.pc!.addTrack(t, stream));
 
       // ── DataChannel ──
-      this.dc = this.pc.createDataChannel("oai-events");
+      // 채널 이름은 provider별로 다름 (Azure: "realtime-channel", OpenAI: "oai-events").
+      // Azure는 webrtcfilter=on 일 때 지정 이름 채널로만 이벤트를 흘려보냄.
+      this.dc = this.pc.createDataChannel(dataChannelName);
       this.dc.onopen = () => {
         handlers.onStatusChange("listening");
       };

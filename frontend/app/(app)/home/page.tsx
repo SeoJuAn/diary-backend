@@ -42,9 +42,9 @@ export default function HomePage() {
       const tokenRes = await realtimeApi.getToken({
         sessionConfig: { model: "gpt-4o-realtime-preview-2024-12-17" },
       });
-      const { token, sessionId: sid } = tokenRes.data;
+      const { token, sessionId: sid, webrtcUrl, dataChannelName } = tokenRes.data;
       setSessionId(sid);
-      await realtimeClient.connect(token, "gpt-4o-realtime-preview-2024-12-17", {
+      await realtimeClient.connect(token, webrtcUrl, dataChannelName, {
         onStatusChange: (s) => setVoiceStatus(s),
         onUserTranscript: (text) => { if (text.trim()) addMessage({ role: "user", content: text }); },
         onAssistantTranscript: (text, isDone) => { if (isDone && text.trim()) addMessage({ role: "assistant", content: text }); },
