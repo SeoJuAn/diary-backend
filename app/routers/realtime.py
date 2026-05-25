@@ -221,7 +221,10 @@ async def get_token(body: TokenRequest, current_user: dict = Depends(get_current
         session_obj = data.get("session") or {}
         session_id = session_obj.get("id") or str(uuid.uuid4())
         expires_at = data.get("expires_at")
-        webrtc_url = f"{host}/openai/v1/realtime?model={deployment}"
+        # Azure GA SDP 교환 엔드포인트는 /openai/v1/realtime/calls.
+        # ?webrtcfilter=on 은 공식 샘플 기본값으로 system prompt 등 내부 메시지가
+        # DataChannel로 누출되는 걸 막음 (transcript/response 이벤트는 그대로 흐름).
+        webrtc_url = f"{host}/openai/v1/realtime/calls?webrtcfilter=on"
         model_label = deployment
     else:
         # OpenAI (기본)
