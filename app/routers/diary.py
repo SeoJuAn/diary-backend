@@ -55,16 +55,17 @@ async def organize_diary(body: OrganizeRequest, current_user: dict = Depends(get
     )
     system_prompt = row["prompt"] if row else DEFAULT_PROMPT
 
-    return await _organize_onpremise(body.text, system_prompt)
+    return await _organize_aicenter(body.text, system_prompt)
 
 
-async def _organize_onpremise(text: str, system_prompt: str) -> dict:
-    logger.info(f"🌐 sLLM 호출 — POST {settings.onpremise_llm_url}/chat/completions (model={settings.onpremise_llm_model})")
+async def _organize_aicenter(text: str, system_prompt: str) -> dict:
+    logger.info(f"🌐 AI Center LLM 호출 — POST {settings.aicenter_url}/chat/completions (model={settings.aicenter_model})")
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
-            f"{settings.onpremise_llm_url}/chat/completions",
+            f"{settings.aicenter_url}/chat/completions",
+            headers={"Authorization": f"Bearer {settings.aicenter_api_key}"},
             json={
-                "model": settings.onpremise_llm_model,
+                "model": settings.aicenter_model,
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"다음 대화 내용을 바탕으로 일기를 작성해주세요. JSON 객체 하나만 출력:\n\n{text}"},
@@ -76,13 +77,13 @@ async def _organize_onpremise(text: str, system_prompt: str) -> dict:
     resp.raise_for_status()
     raw = resp.json()["choices"][0]["message"]["content"]
 
-    # sLLM이 ```json ... ``` 으로 감싸거나 앞뒤 텍스트 붙일 수 있어 JSON 영역만 추출
+    # 모델이 ```json ... ``` 으로 감싸거나 앞뒤 텍스트 붙일 수 있어 JSON 영역만 추출
     summary = _safe_parse_summary(raw)
     return {"success": True, "summary": summary}
 
 
 def _safe_parse_summary(raw: str) -> dict:
-    """sLLM 출력에서 JSON object를 추출. 실패 시 raw 텍스트를 oneLiner+fullDiary로."""
+    """LLM 출력에서 JSON object를 추출. 실패 시 raw 텍스트를 oneLiner+fullDiary로."""
     candidate = raw.strip()
     # ```json ... ``` 마크다운 코드블록 제거
     m = re.search(r"```(?:json)?\s*(.*?)```", candidate, flags=re.DOTALL)
@@ -100,7 +101,7 @@ def _safe_parse_summary(raw: str) -> dict:
         parsed.setdefault("fullDiary", raw)
         return parsed
     except Exception as e:
-        logger.warning(f"⚠️ sLLM JSON 파싱 실패 ({e}) — raw fallback")
+        logger.warning(f"⚠️ LLM JSON 파싱 실패 ({e}) — raw fallback")
         return {
             "oneLiner": raw[:120],
             "dailyHighlights": [],

@@ -21,9 +21,10 @@ class Settings(BaseSettings):
     # Tavily (웹 검색)
     tavily_api_key: str = ""
 
-    # On-premise LLM (sLLM via Cloudflare 고정 IP)
-    onpremise_llm_url: str = "https://api.kpmgpoc-samsungfire.com/v1"
-    onpremise_llm_model: str = "LFM2"
+    # AI Center LLM Gateway (organize-diary, context-extract 등 텍스트 LLM 호출용)
+    aicenter_url: str = "https://llmgateway.azurewebsites.net/v1"
+    aicenter_api_key: str = ""
+    aicenter_model: str = "gemma4-26b-a4b"
 
     # Realtime provider 분기 ("openai" | "azure")
     realtime_provider: str = "openai"

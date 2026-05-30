@@ -37,17 +37,18 @@ async def extract_context(body: ExtractRequest, current_user: dict = Depends(get
     )
     system_prompt = row["prompt"] if row else DEFAULT_PROMPT
 
-    result = await _extract_onpremise(body.conversationText, system_prompt)
+    result = await _extract_aicenter(body.conversationText, system_prompt)
     return {"success": True, "context": result}
 
 
-async def _extract_onpremise(text: str, system_prompt: str) -> str:
-    logger.info(f"🌐 sLLM 호출 — POST {settings.onpremise_llm_url}/chat/completions (model={settings.onpremise_llm_model})")
+async def _extract_aicenter(text: str, system_prompt: str) -> str:
+    logger.info(f"🌐 AI Center LLM 호출 — POST {settings.aicenter_url}/chat/completions (model={settings.aicenter_model})")
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
-            f"{settings.onpremise_llm_url}/chat/completions",
+            f"{settings.aicenter_url}/chat/completions",
+            headers={"Authorization": f"Bearer {settings.aicenter_api_key}"},
             json={
-                "model": settings.onpremise_llm_model,
+                "model": settings.aicenter_model,
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"다음 대화를 분석해주세요:\n\n{text}"},
