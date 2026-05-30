@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     # Tavily (웹 검색)
     tavily_api_key: str = ""
 
-    # On-premise LLM (optional)
+    # On-premise LLM (sLLM via Cloudflare 고정 IP)
     onpremise_llm_url: str = "https://api.kpmgpoc-samsungfire.com/v1"
-    onpremise_llm_model: str = "LFM2-2.6B-Exp-Q8_0.gguf"
+    onpremise_llm_model: str = "LFM2"
 
     # Realtime provider 분기 ("openai" | "azure")
     realtime_provider: str = "openai"
