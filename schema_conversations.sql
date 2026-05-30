@@ -24,10 +24,14 @@ CREATE TABLE IF NOT EXISTS conversation_sessions (
     keywords          JSONB DEFAULT '[]',           -- ["연남동", "야근", "커튼 설치"]
     main_topics       JSONB DEFAULT '[]',           -- ["데이트", "업무", "집안일"]
     context_summary   TEXT,                         -- 대화 컨텍스트 분석 원문
+    keywords_text     TEXT DEFAULT '',              -- keywords를 공백 join한 평문 (ILIKE 검색용)
 
     created_at        TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at        TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 기존 DB에 keywords_text 컬럼이 없으면 추가 (idempotent migration)
+ALTER TABLE conversation_sessions ADD COLUMN IF NOT EXISTS keywords_text TEXT DEFAULT '';
 
 -- 인덱스
 CREATE INDEX IF NOT EXISTS idx_conv_sessions_user_id    ON conversation_sessions(user_id);
