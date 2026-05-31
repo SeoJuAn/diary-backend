@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # AI Center LLM Gateway (organize-diary, context-extract 등 텍스트 LLM 호출용)
     aicenter_url: str = "https://llmgateway.azurewebsites.net/v1"
     aicenter_api_key: str = ""
-    aicenter_model: str = "gemma4-26b-a4b"
+    aicenter_model: str = "gpt-5.4"
 
     # Realtime provider 분기 ("openai" | "azure")
     realtime_provider: str = "openai"
