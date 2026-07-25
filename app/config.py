@@ -2,8 +2,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # OpenAI
+    # OpenAI — 모든 LLM 호출(텍스트/Realtime/STT/TTS)의 단일 경로
     openai_api_key: str
+    openai_base_url: str = "https://api.openai.com/v1"
 
     # DB
     db_host: str = "localhost"
@@ -21,20 +22,15 @@ class Settings(BaseSettings):
     # Tavily (웹 검색)
     tavily_api_key: str = ""
 
-    # AI Center LLM Gateway (organize-diary, context-extract 등 텍스트 LLM 호출용)
-    aicenter_url: str = "https://llmgateway.azurewebsites.net/v1"
-    aicenter_api_key: str = ""
-    aicenter_model: str = "gpt-5.4"
+    # 텍스트 LLM (organize-diary, context-extract)
+    # GPT-5 계열은 temperature를 받지 않고 max_completion_tokens를 사용한다.
+    openai_text_model: str = "gpt-5.6-terra"
+    # "none" | "low" | "medium" | "high" | "xhigh" | "max".
+    # 빈 문자열이면 파라미터 자체를 보내지 않음 (미지원 모델 대응용 탈출구).
+    openai_reasoning_effort: str = "none"
 
-    # Realtime provider 분기 ("openai" | "azure")
-    realtime_provider: str = "openai"
-
-    # Azure OpenAI (Foundry) — realtime_provider="azure"일 때만 사용
-    # endpoint는 host만 권장 (예: https://<resource>.cognitiveservices.azure.com).
-    # path/쿼리가 붙어와도 코드에서 scheme+host만 추출함.
-    azure_openai_endpoint: str = ""
-    azure_openai_key: str = ""
-    azure_realtime_deployment: str = "gpt-realtime-2"
+    # Realtime (WebRTC ephemeral token)
+    openai_realtime_model: str = "gpt-realtime-2.1"
 
     class Config:
         env_file = ".env"

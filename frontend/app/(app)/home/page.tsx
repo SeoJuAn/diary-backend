@@ -39,9 +39,7 @@ export default function HomePage() {
     clearMessages(); clearSummary(); startSession();
     setStarted(true);
     try {
-      const tokenRes = await realtimeApi.getToken({
-        sessionConfig: { model: "gpt-4o-realtime-preview-2024-12-17" },
-      });
+      const tokenRes = await realtimeApi.getToken({ sessionConfig: {} });
       const { token, sessionId: sid, webrtcUrl, dataChannelName } = tokenRes.data;
       setSessionId(sid);
       await realtimeClient.connect(token, webrtcUrl, dataChannelName, {

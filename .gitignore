@@ -7,3 +7,5 @@ node_modules/
 *.backup
 push-*.sh
 *.key
+__pycache__/
+*.pyc

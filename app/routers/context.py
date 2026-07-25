@@ -37,25 +37,31 @@ async def extract_context(body: ExtractRequest, current_user: dict = Depends(get
     )
     system_prompt = row["prompt"] if row else DEFAULT_PROMPT
 
-    result = await _extract_aicenter(body.conversationText, system_prompt)
+    result = await _extract_openai(body.conversationText, system_prompt)
     return {"success": True, "context": result}
 
 
-async def _extract_aicenter(text: str, system_prompt: str) -> str:
-    logger.info(f"🌐 AI Center LLM 호출 — POST {settings.aicenter_url}/chat/completions (model={settings.aicenter_model})")
+async def _extract_openai(text: str, system_prompt: str) -> str:
+    logger.info(f"🌐 OpenAI LLM 호출 — POST {settings.openai_base_url}/chat/completions (model={settings.openai_text_model})")
+    payload = {
+        "model": settings.openai_text_model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"다음 대화를 분석해주세요:\n\n{text}"},
+        ],
+        # 추론 토큰도 이 예산에서 차감되므로 출력 길이보다 넉넉히 잡음
+        "max_completion_tokens": 2000,
+    }
+    if settings.openai_reasoning_effort:
+        payload["reasoning_effort"] = settings.openai_reasoning_effort
+
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
-            f"{settings.aicenter_url}/chat/completions",
-            headers={"Authorization": f"Bearer {settings.aicenter_api_key}"},
-            json={
-                "model": settings.aicenter_model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"다음 대화를 분석해주세요:\n\n{text}"},
-                ],
-                "temperature": 0.3,
-                "max_tokens": 1000,
-            },
+            f"{settings.openai_base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {settings.openai_api_key}"},
+            json=payload,
         )
+    if not resp.is_success:
+        logger.error(f"❌ OpenAI LLM 오류: {resp.status_code} — {resp.text[:300]}")
     resp.raise_for_status()
     return resp.json()["choices"][0]["message"]["content"]

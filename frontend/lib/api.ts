@@ -122,7 +122,8 @@ export const authApi = {
 // ── Realtime ──
 export const realtimeApi = {
   getToken: (data: {
-    sessionConfig: { model: string; voice?: string; instructions?: string };
+    // model은 서버(OPENAI_REALTIME_MODEL)가 결정 — 클라이언트에서 지정하지 않음
+    sessionConfig: { voice?: string; instructions?: string };
     advancedConfig?: Record<string, unknown>;
   }) => api.post("/api/realtime/token", data),
 
