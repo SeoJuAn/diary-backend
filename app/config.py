@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     tavily_api_key: str = ""
 
     # ── 텍스트 LLM (organize-diary, context-extract) ──
-    # opencode-router 프록시를 경유.
+    # OpenCode Go 직접 호출.
     # opencode_api_key 가 비어 있으면 기본 openai_api_key 로 폴백 (하위호환).
     opencode_api_key: str = ""
     openai_text_model: str = "gpt-5.6-luna"

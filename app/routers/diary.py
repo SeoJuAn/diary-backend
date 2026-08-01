@@ -61,7 +61,7 @@ async def organize_diary(body: OrganizeRequest, current_user: dict = Depends(get
 async def _organize_openai(text: str, system_prompt: str) -> dict:
     text_api_key = settings.opencode_api_key or settings.openai_api_key
     text_base_url = settings.openai_text_base_url or settings.openai_base_url
-    logger.info(f"🌐 LLM 호출 (opencode-router) — POST {text_base_url}/chat/completions (model={settings.openai_text_model})")
+    logger.info(f"🌐 LLM 호출 (OpenCode Go) — POST {text_base_url}/chat/completions (model={settings.openai_text_model})")
     payload = {
         "model": settings.openai_text_model,
         "messages": [

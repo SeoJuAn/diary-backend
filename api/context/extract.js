@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 // LLM 프로바이더 설정
 const LLM_PROVIDERS = {
   openai: {
-    // opencode-router 프록시 경유
+    // OpenCode Go 직접 호출
     baseURL: process.env.OPENAI_TEXT_BASE_URL || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     model: process.env.OPENAI_TEXT_MODEL || 'gpt-5.6-luna',
   },
@@ -13,7 +13,7 @@ const LLM_PROVIDERS = {
   },
 };
 
-// OpenAI 클라이언트 생성 (OpenAI 호환 — opencode-router 등)
+// OpenAI 클라이언트 생성 (OpenAI 호환 — OpenCode Go 등)
 function createOpenAIClient() {
   const config = LLM_PROVIDERS.openai;
   return new OpenAI({
