@@ -22,12 +22,12 @@ class Settings(BaseSettings):
     # Tavily (웹 검색)
     tavily_api_key: str = ""
 
-    # 텍스트 LLM (organize-diary, context-extract)
-    # GPT-5 계열은 temperature를 받지 않고 max_completion_tokens를 사용한다.
-    openai_text_model: str = "gpt-5.6-terra"
-    # "none" | "low" | "medium" | "high" | "xhigh" | "max".
-    # 빈 문자열이면 파라미터 자체를 보내지 않음 (미지원 모델 대응용 탈출구).
-    openai_reasoning_effort: str = "none"
+    # ── 텍스트 LLM (organize-diary, context-extract) ──
+    # opencode-router 프록시를 경유.
+    # opencode_api_key 가 비어 있으면 기본 openai_api_key 로 폴백 (하위호환).
+    opencode_api_key: str = ""
+    openai_text_model: str = "gpt-5.6-luna"
+    openai_text_base_url: str = "https://opencode.ai/zen/go/v1"
 
     # Realtime (WebRTC ephemeral token)
     openai_realtime_model: str = "gpt-realtime-2.1"

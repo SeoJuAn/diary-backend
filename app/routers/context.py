@@ -42,23 +42,22 @@ async def extract_context(body: ExtractRequest, current_user: dict = Depends(get
 
 
 async def _extract_openai(text: str, system_prompt: str) -> str:
-    logger.info(f"🌐 OpenAI LLM 호출 — POST {settings.openai_base_url}/chat/completions (model={settings.openai_text_model})")
+    text_api_key = settings.opencode_api_key or settings.openai_api_key
+    text_base_url = settings.openai_text_base_url or settings.openai_base_url
+    logger.info(f"🌐 LLM 호출 (opencode-router) — POST {text_base_url}/chat/completions (model={settings.openai_text_model})")
     payload = {
         "model": settings.openai_text_model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"다음 대화를 분석해주세요:\n\n{text}"},
         ],
-        # 추론 토큰도 이 예산에서 차감되므로 출력 길이보다 넉넉히 잡음
-        "max_completion_tokens": 2000,
+        "max_tokens": 2000,
     }
-    if settings.openai_reasoning_effort:
-        payload["reasoning_effort"] = settings.openai_reasoning_effort
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
-            f"{settings.openai_base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {settings.openai_api_key}"},
+            f"{text_base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {text_api_key}"},
             json=payload,
         )
     if not resp.is_success:

@@ -59,25 +59,23 @@ async def organize_diary(body: OrganizeRequest, current_user: dict = Depends(get
 
 
 async def _organize_openai(text: str, system_prompt: str) -> dict:
-    logger.info(f"🌐 OpenAI LLM 호출 — POST {settings.openai_base_url}/chat/completions (model={settings.openai_text_model})")
+    text_api_key = settings.opencode_api_key or settings.openai_api_key
+    text_base_url = settings.openai_text_base_url or settings.openai_base_url
+    logger.info(f"🌐 LLM 호출 (opencode-router) — POST {text_base_url}/chat/completions (model={settings.openai_text_model})")
     payload = {
         "model": settings.openai_text_model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"다음 대화 내용을 바탕으로 일기를 작성해주세요. JSON 객체 하나만 출력:\n\n{text}"},
         ],
-        # 프롬프트에 "JSON"이 포함돼 있어야 하는 모드 — user 메시지가 조건을 만족함
         "response_format": {"type": "json_object"},
-        # 추론 토큰도 이 예산에서 차감되므로 출력 길이보다 넉넉히 잡음
-        "max_completion_tokens": 4000,
+        "max_tokens": 4000,
     }
-    if settings.openai_reasoning_effort:
-        payload["reasoning_effort"] = settings.openai_reasoning_effort
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
-            f"{settings.openai_base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {settings.openai_api_key}"},
+            f"{text_base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {text_api_key}"},
             json=payload,
         )
     if not resp.is_success:

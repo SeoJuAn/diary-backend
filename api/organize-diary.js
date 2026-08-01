@@ -3,9 +3,10 @@ import OpenAI from 'openai';
 // LLM 프로바이더 설정
 const LLM_PROVIDERS = {
   openai: {
-    baseURL: 'https://api.openai.com/v1',
-    model: 'gpt-4o',
-    getApiKey: () => process.env.OPENAI_API_KEY,
+    // opencode-router 프록시 경유
+    baseURL: process.env.OPENAI_TEXT_BASE_URL || process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    model: process.env.OPENAI_TEXT_MODEL || 'gpt-5.6-luna',
+    getApiKey: () => process.env.OPENCODE_API_KEY || process.env.OPENAI_API_KEY,
   },
   onpremise: {
     baseURL: process.env.ONPREMISE_LLM_URL || 'https://api.kpmgpoc-samsungfire.com/v1',
@@ -14,10 +15,12 @@ const LLM_PROVIDERS = {
   },
 };
 
-// OpenAI 클라이언트 생성 (OpenAI 전용)
+// OpenAI 클라이언트 생성 (OpenAI 호환 — opencode-router 등)
 function createOpenAIClient() {
+  const config = LLM_PROVIDERS.openai;
   return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: config.baseURL,
+    apiKey: config.getApiKey(),
   });
 }
 
@@ -153,8 +156,8 @@ export default async function handler(req, res) {
     }
 
     // OpenAI 선택 시 API 키 확인
-    if (llmProvider === 'openai' && !process.env.OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY 환경변수가 설정되지 않았습니다');
+    if (llmProvider === 'openai' && !LLM_PROVIDERS.openai.getApiKey()) {
+      console.error('OPENCODE_API_KEY 또는 OPENAI_API_KEY 환경변수가 설정되지 않았습니다');
       return res.status(500).json({
         success: false,
         error: '서버 설정 오류',
