@@ -114,6 +114,10 @@ async def switch_prompt(
     )
     if not target:
         raise HTTPException(status_code=404, detail="프롬프트 버전을 찾을 수 없습니다.")
+    if target["endpoint"] != endpoint:
+        raise HTTPException(status_code=400, detail="요청한 endpoint와 프롬프트 버전의 endpoint가 일치하지 않습니다.")
+    if target["user_id"] is not None and str(target["user_id"]) != user_id:
+        raise HTTPException(status_code=403, detail="본인의 프롬프트만 활성화할 수 있습니다.")
 
     async with Transaction() as conn:
         # 해당 유저의 현재 프롬프트 비활성화

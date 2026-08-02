@@ -1,4 +1,5 @@
 import { query, transaction } from '../lib/db.js';
+import { verifyTokenFromRequest } from '../lib/auth.js';
 
 /**
  * Unified Advanced Presets API
@@ -12,23 +13,30 @@ export default async function handler(req, res) {
   // CORS 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  let userId;
+  try {
+    userId = verifyTokenFromRequest(req).userId;
+  } catch (e) {
+    return res.status(401).json({ success: false, error: '인증이 필요합니다.' });
   }
 
   try {
     // Route based on HTTP method
     switch (req.method) {
       case 'GET':
-        return await handleList(req, res);
+        return await handleList(req, res, userId);
       case 'POST':
-        return await handleCreate(req, res);
+        return await handleCreate(req, res, userId);
       case 'PUT':
-        return await handleSwitch(req, res);
+        return await handleSwitch(req, res, userId);
       case 'DELETE':
-        return await handleDelete(req, res);
+        return await handleDelete(req, res, userId);
       default:
         return res.status(405).json({
           success: false,
@@ -37,18 +45,18 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('❌ Error in advanced-presets API:', error);
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      error: 'Internal server error',
+      error: error.statusCode ? error.message : 'Internal server error',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 }
 
 /**
- * GET - List all presets for an endpoint
+ * GET - List all presets for an endpoint (own + system presets only)
  */
-async function handleList(req, res) {
+async function handleList(req, res, userId) {
   const { endpoint } = req.query;
 
   if (!endpoint) {
@@ -59,7 +67,7 @@ async function handleList(req, res) {
   }
 
   const result = await query(
-    `SELECT 
+    `SELECT
       id,
       endpoint,
       preset_name as "presetName",
@@ -74,11 +82,12 @@ async function handleList(req, res) {
       truncation,
       is_system as "isSystem",
       is_current as "isCurrent",
+      user_id as "userId",
       created_at as "createdAt"
     FROM advanced_presets
-    WHERE endpoint = $1
+    WHERE endpoint = $1 AND (user_id = $2 OR user_id IS NULL)
     ORDER BY is_system DESC, created_at ASC`,
-    [endpoint]
+    [endpoint, userId]
   );
 
   return res.status(200).json({
@@ -88,9 +97,9 @@ async function handleList(req, res) {
 }
 
 /**
- * POST - Create a new preset
+ * POST - Create a new preset (always owned by the requesting user)
  */
-async function handleCreate(req, res) {
+async function handleCreate(req, res, userId) {
   const { endpoint, presetName, config } = req.body;
 
   if (!endpoint || !presetName || !config) {
@@ -107,9 +116,9 @@ async function handleCreate(req, res) {
         temperature, speed, threshold,
         prefix_padding_ms, silence_duration_ms, idle_timeout_ms,
         max_output_tokens, noise_reduction, truncation,
-        is_system, is_current
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, false, false)
-      RETURNING 
+        is_system, is_current, user_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, false, false, $12)
+      RETURNING
         id,
         preset_name as "presetName",
         temperature, speed, threshold,
@@ -125,7 +134,8 @@ async function handleCreate(req, res) {
         config.idle_timeout_ms,
         config.max_output_tokens,
         config.noise_reduction,
-        config.truncation
+        config.truncation,
+        userId,
       ]
     );
 
@@ -148,9 +158,9 @@ async function handleCreate(req, res) {
 }
 
 /**
- * PUT - Switch active preset
+ * PUT - Switch active preset (own preset or system default only)
  */
-async function handleSwitch(req, res) {
+async function handleSwitch(req, res, userId) {
   const { endpoint, presetId } = req.body;
 
   if (!endpoint || !presetId) {
@@ -161,27 +171,34 @@ async function handleSwitch(req, res) {
   }
 
   const result = await transaction(async (client) => {
-    // 1. 대상 프리셋 확인
+    // 1. 대상 프리셋 확인 + 소유권 검증 (본인 프리셋이거나 시스템 기본값만 허용)
     const checkResult = await client.query(
-      `SELECT id, preset_name FROM advanced_presets WHERE id = $1 AND endpoint = $2`,
+      `SELECT id, preset_name, user_id FROM advanced_presets WHERE id = $1 AND endpoint = $2`,
       [presetId, endpoint]
     );
 
     if (checkResult.rows.length === 0) {
       throw new Error('Preset not found');
     }
+    const target = checkResult.rows[0];
+    if (target.user_id !== null && target.user_id !== userId) {
+      const err = new Error('본인의 프리셋만 활성화할 수 있습니다.');
+      err.statusCode = 403;
+      throw err;
+    }
 
-    // 2. 기존 current 플래그 제거
+    // 2. 기존 current 플래그 제거 (본인 프리셋 또는 시스템 기본값 범위만)
     await client.query(
-      `UPDATE advanced_presets SET is_current = FALSE WHERE endpoint = $1 AND is_current = TRUE`,
-      [endpoint]
+      `UPDATE advanced_presets SET is_current = FALSE
+       WHERE endpoint = $1 AND (user_id = $2 OR (user_id IS NULL AND is_current = TRUE))`,
+      [endpoint, userId]
     );
 
     // 3. 새 프리셋을 current로 설정
     const updateResult = await client.query(
       `UPDATE advanced_presets SET is_current = TRUE, updated_at = NOW()
       WHERE id = $1
-      RETURNING 
+      RETURNING
         id, preset_name as "presetName", temperature, speed, threshold,
         prefix_padding_ms as "prefixPaddingMs", silence_duration_ms as "silenceDurationMs",
         idle_timeout_ms as "idleTimeoutMs", max_output_tokens as "maxOutputTokens",
@@ -202,9 +219,9 @@ async function handleSwitch(req, res) {
 }
 
 /**
- * DELETE - Delete a preset
+ * DELETE - Delete a preset (own, non-system presets only)
  */
-async function handleDelete(req, res) {
+async function handleDelete(req, res, userId) {
   const { endpoint, presetId } = req.body;
 
   if (!endpoint || !presetId) {
@@ -216,8 +233,8 @@ async function handleDelete(req, res) {
 
   // 1. 프리셋 존재 여부 및 삭제 가능 여부 확인
   const presetCheck = await query(
-    `SELECT id, preset_name, is_system, is_current 
-     FROM advanced_presets 
+    `SELECT id, preset_name, is_system, is_current, user_id
+     FROM advanced_presets
      WHERE id = $1 AND endpoint = $2`,
     [presetId, endpoint]
   );
@@ -236,6 +253,14 @@ async function handleDelete(req, res) {
     return res.status(400).json({
       success: false,
       error: 'Cannot delete system preset',
+    });
+  }
+
+  // 2b. 본인 프리셋만 삭제 가능
+  if (preset.user_id !== userId) {
+    return res.status(403).json({
+      success: false,
+      error: 'You can only delete your own presets',
     });
   }
 

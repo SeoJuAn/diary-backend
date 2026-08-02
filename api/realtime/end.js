@@ -37,6 +37,16 @@ export default async function handler(req, res) {
 
     // ── 트랜잭션으로 세션 + 메시지 저장 ──
     const savedSession = await transaction(async (client) => {
+      const existing = await client.query(
+        'SELECT user_id FROM conversation_sessions WHERE session_id = $1',
+        [sessionId]
+      );
+      if (existing.rows.length > 0 && existing.rows[0].user_id !== userId) {
+        const err = new Error('다른 사용자의 세션은 수정할 수 없습니다.');
+        err.statusCode = 403;
+        throw err;
+      }
+
       // 1. conversation_sessions upsert
       //    (같은 session_id로 중복 호출 방지 - ON CONFLICT UPDATE)
       const sessionResult = await client.query(
@@ -129,9 +139,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Failed to save session:', error);
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      error: '대화 기록 저장 중 오류가 발생했습니다.',
+      error: error.statusCode === 403 ? error.message : '대화 기록 저장 중 오류가 발생했습니다.',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }

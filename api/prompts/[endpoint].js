@@ -1,4 +1,5 @@
 import { query, transaction } from '../../lib/db.js';
+import { verifyTokenFromRequest } from '../../lib/auth.js';
 
 /**
  * Unified Prompts API for dynamic endpoint
@@ -12,10 +13,17 @@ export default async function handler(req, res) {
   // CORS 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  let userId;
+  try {
+    userId = verifyTokenFromRequest(req).userId;
+  } catch (e) {
+    return res.status(401).json({ success: false, error: '인증이 필요합니다.' });
   }
 
   // Vercel 동적 라우팅에서 endpoint 추출
@@ -42,15 +50,15 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const { action } = req.query;
       if (action === 'versions') {
-        return await handleGetVersions(req, res, endpoint);
+        return await handleGetVersions(req, res, endpoint, userId);
       } else {
         // Default: get current
-        return await handleGetCurrent(req, res, endpoint);
+        return await handleGetCurrent(req, res, endpoint, userId);
       }
     } else if (req.method === 'POST') {
-      return await handleCreate(req, res, endpoint);
+      return await handleCreate(req, res, endpoint, userId);
     } else if (req.method === 'PUT') {
-      return await handleSwitch(req, res, endpoint);
+      return await handleSwitch(req, res, endpoint, userId);
     } else {
       return res.status(405).json({
         success: false,
@@ -59,23 +67,23 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('❌ Error in prompts API:', error);
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      error: 'Internal server error',
+      error: error.statusCode ? error.message : 'Internal server error',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 }
 
 /**
- * GET - Get current prompt version
+ * GET - Get current prompt version (own version takes priority, falls back to system)
  */
-async function handleGetCurrent(req, res, endpoint) {
+async function handleGetCurrent(req, res, endpoint, userId) {
   console.log(`🔍 Fetching current prompt for endpoint: ${endpoint}`);
 
-  // 현재 활성 버전 조회
+  // 현재 활성 버전 조회 (본인 버전 우선, 없으면 시스템 기본값)
   const result = await query(
-    `SELECT 
+    `SELECT
       id,
       endpoint,
       version,
@@ -84,9 +92,10 @@ async function handleGetCurrent(req, res, endpoint) {
       is_default as "isDefault",
       created_at as "createdAt"
     FROM prompt_versions
-    WHERE endpoint = $1 AND is_current = TRUE
+    WHERE endpoint = $1 AND is_current = TRUE AND (user_id = $2 OR user_id IS NULL)
+    ORDER BY CASE WHEN user_id = $2 THEN 0 ELSE 1 END
     LIMIT 1`,
-    [endpoint]
+    [endpoint, userId]
   );
 
   if (result.rows.length === 0) {
@@ -126,18 +135,18 @@ async function handleGetCurrent(req, res, endpoint) {
 }
 
 /**
- * GET - Get all prompt versions
+ * GET - Get all prompt versions (own + system versions only)
  */
-async function handleGetVersions(req, res, endpoint) {
+async function handleGetVersions(req, res, endpoint, userId) {
   console.log(`📋 Fetching all versions for endpoint: ${endpoint}`);
 
-  // 모든 버전 조회
+  // 모든 버전 조회 (본인 버전 + 시스템 기본값만)
   const result = await query(
-    `SELECT 
-      id, 
-      endpoint, 
-      version, 
-      name, 
+    `SELECT
+      id,
+      endpoint,
+      version,
+      name,
       prompt,
       is_default as "isDefault",
       is_current as "isCurrent",
@@ -145,9 +154,9 @@ async function handleGetVersions(req, res, endpoint) {
       created_at as "createdAt",
       updated_at as "updatedAt"
     FROM prompt_versions
-    WHERE endpoint = $1
+    WHERE endpoint = $1 AND (user_id = $2 OR user_id IS NULL)
     ORDER BY version`,
-    [endpoint]
+    [endpoint, userId]
   );
 
   // 현재 버전 찾기
@@ -163,9 +172,9 @@ async function handleGetVersions(req, res, endpoint) {
 }
 
 /**
- * POST - Create new prompt version
+ * POST - Create new prompt version (always owned by the requesting user)
  */
-async function handleCreate(req, res, endpoint) {
+async function handleCreate(req, res, endpoint, userId) {
   const { name, prompt, description } = req.body;
 
   if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -185,31 +194,33 @@ async function handleCreate(req, res, endpoint) {
   console.log(`📝 Creating new prompt version for endpoint: ${endpoint}`);
   console.log(`Name: ${name}`);
 
-  // 다음 버전 번호 계산 및 삽입 (advancedConfig 제거됨)
+  // 다음 버전 번호 계산 (본인 버전 기준) 및 삽입
   const result = await query(
     `WITH next_version AS (
-      SELECT 
+      SELECT
         'v' || (COALESCE(MAX(CAST(SUBSTRING(version FROM 2) AS INTEGER)), -1) + 1) as new_version
       FROM prompt_versions
-      WHERE endpoint = $1
+      WHERE endpoint = $1 AND user_id = $5
     )
     INSERT INTO prompt_versions (
-      endpoint, 
-      version, 
-      name, 
-      prompt, 
+      endpoint,
+      version,
+      name,
+      prompt,
       description,
-      is_current
+      is_current,
+      user_id
     )
-    SELECT 
+    SELECT
       $1,
       new_version,
       $2,
       $3,
       $4,
-      FALSE
+      FALSE,
+      $5
     FROM next_version
-    RETURNING 
+    RETURNING
       id,
       endpoint,
       version,
@@ -219,7 +230,7 @@ async function handleCreate(req, res, endpoint) {
       is_default as "isDefault",
       is_current as "isCurrent",
       created_at as "createdAt"`,
-    [endpoint, name.trim(), prompt.trim(), description?.trim() || null]
+    [endpoint, name.trim(), prompt.trim(), description?.trim() || null, userId]
   );
 
   const newVersion = result.rows[0];
@@ -234,9 +245,9 @@ async function handleCreate(req, res, endpoint) {
 }
 
 /**
- * PUT - Switch current prompt version
+ * PUT - Switch current prompt version (own version or system default only)
  */
-async function handleSwitch(req, res, endpoint) {
+async function handleSwitch(req, res, endpoint, userId) {
   const { versionId } = req.body;
 
   if (!versionId || typeof versionId !== 'string') {
@@ -251,9 +262,9 @@ async function handleSwitch(req, res, endpoint) {
 
   // 트랜잭션으로 버전 전환
   const result = await transaction(async (client) => {
-    // 1. 대상 버전이 존재하는지 확인
+    // 1. 대상 버전이 존재하는지 + 소유권 확인 (본인 버전이거나 시스템 기본값만 허용)
     const checkResult = await client.query(
-      `SELECT id, endpoint, version, name
+      `SELECT id, endpoint, version, name, user_id
       FROM prompt_versions
       WHERE id = $1 AND endpoint = $2`,
       [versionId, endpoint]
@@ -262,13 +273,19 @@ async function handleSwitch(req, res, endpoint) {
     if (checkResult.rows.length === 0) {
       throw new Error('Version not found or does not belong to this endpoint');
     }
+    const target = checkResult.rows[0];
+    if (target.user_id !== null && target.user_id !== userId) {
+      const err = new Error('본인의 프롬프트만 활성화할 수 있습니다.');
+      err.statusCode = 403;
+      throw err;
+    }
 
-    // 2. 기존 current 플래그 제거
+    // 2. 기존 current 플래그 제거 (본인 버전 또는 시스템 기본값 범위만)
     await client.query(
       `UPDATE prompt_versions
       SET is_current = FALSE, updated_at = CURRENT_TIMESTAMP
-      WHERE endpoint = $1 AND is_current = TRUE`,
-      [endpoint]
+      WHERE endpoint = $1 AND (user_id = $2 OR (user_id IS NULL AND is_current = TRUE))`,
+      [endpoint, userId]
     );
 
     // 3. 새 버전을 current로 설정

@@ -95,6 +95,8 @@ async def switch_preset(body: SwitchPresetRequest, current_user: dict = Depends(
     )
     if not target:
         raise HTTPException(status_code=404, detail="프리셋을 찾을 수 없습니다.")
+    if target["user_id"] is not None and str(target["user_id"]) != user_id:
+        raise HTTPException(status_code=403, detail="본인의 프리셋만 활성화할 수 있습니다.")
 
     async with Transaction() as conn:
         # 해당 유저의 현재 프리셋 비활성화

@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { verifyTokenFromRequest } from '../../lib/auth.js';
 
 // LLM 프로바이더 설정
 const LLM_PROVIDERS = {
@@ -60,7 +61,7 @@ export default async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // OPTIONS 요청 처리 (preflight)
   if (req.method === 'OPTIONS') {
@@ -73,6 +74,12 @@ export default async function handler(req, res) {
       success: false,
       error: 'Method not allowed. Use POST.',
     });
+  }
+
+  try {
+    verifyTokenFromRequest(req);
+  } catch (e) {
+    return res.status(401).json({ success: false, error: '인증이 필요합니다.' });
   }
 
   try {

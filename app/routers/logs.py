@@ -4,17 +4,33 @@ DELETE /api/logs/clear — 로그 버퍼 클리어
 """
 import asyncio
 import json
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
+from app.dependencies import get_current_user
+from app.auth_utils import verify_access_token
 from app.log_handler import log_buffer, log_subscribers
 
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 
 
-@router.get("/stream")
-async def stream_logs():
+async def get_current_user_for_sse(token: str | None = None) -> dict:
     """
-    SSE endpoint — 인증 없이 공개.
+    SSE(EventSource)는 커스텀 Authorization 헤더를 보낼 수 없으므로,
+    쿼리 파라미터로 전달된 access token을 검증한다.
+    """
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="인증이 필요합니다.")
+    try:
+        payload = verify_access_token(token)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="인증이 필요합니다.")
+    return {"userId": payload.get("userId")}
+
+
+@router.get("/stream")
+async def stream_logs(current_user: dict = Depends(get_current_user_for_sse)):
+    """
+    SSE endpoint — 로그인한 사용자만 접근 가능 (?token=<accessToken> 쿼리 파라미터로 인증).
     연결 즉시 기존 버퍼 전송 후 신규 로그를 실시간 push.
     """
     queue: asyncio.Queue = asyncio.Queue(maxsize=200)
@@ -55,6 +71,6 @@ async def stream_logs():
 
 
 @router.delete("/clear")
-async def clear_logs():
+async def clear_logs(current_user: dict = Depends(get_current_user)):
     log_buffer.clear()
     return {"success": True, "message": "로그가 클리어되었습니다."}

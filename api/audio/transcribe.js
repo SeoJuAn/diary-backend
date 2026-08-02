@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import formidable from 'formidable';
 import fs from 'fs';
+import { verifyTokenFromRequest } from '../../lib/auth.js';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -18,7 +19,7 @@ export default async function handler(req, res) {
   // CORS 설정 (React Native 앱에서 호출 가능하도록)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Preflight request 처리
   if (req.method === 'OPTIONS') {
@@ -31,6 +32,12 @@ export default async function handler(req, res) {
       success: false,
       error: 'Method not allowed. Use POST.',
     });
+  }
+
+  try {
+    verifyTokenFromRequest(req);
+  } catch (e) {
+    return res.status(401).json({ success: false, error: '인증이 필요합니다.' });
   }
 
   try {

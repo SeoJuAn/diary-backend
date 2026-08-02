@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { verifyTokenFromRequest } from '../lib/auth.js';
 
 // LLM 프로바이더 설정
 const LLM_PROVIDERS = {
@@ -114,7 +115,7 @@ export default async function handler(req, res) {
   // CORS 설정 (React Native 앱에서 호출 가능하도록)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   // Preflight request 처리
   if (req.method === 'OPTIONS') {
@@ -123,10 +124,16 @@ export default async function handler(req, res) {
 
   // POST 메서드만 허용
   if (req.method !== 'POST') {
-    return res.status(405).json({ 
+    return res.status(405).json({
       success: false,
-      error: 'Method not allowed. Use POST.' 
+      error: 'Method not allowed. Use POST.'
     });
+  }
+
+  try {
+    verifyTokenFromRequest(req);
+  } catch (e) {
+    return res.status(401).json({ success: false, error: '인증이 필요합니다.' });
   }
 
   try {

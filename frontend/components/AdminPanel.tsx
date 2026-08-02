@@ -53,12 +53,15 @@ function getLevelClass(level: string): string {
 }
 
 function getSseUrl(): string {
-  if (typeof window === "undefined") return "http://localhost:8000/api/logs/stream";
+  // EventSource는 Authorization 헤더를 보낼 수 없어 access token을 쿼리 파라미터로 전달한다.
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+  if (typeof window === "undefined") return `http://localhost:8000/api/logs/stream${tokenParam}`;
   // 로컬: Next.js가 SSE를 버퍼링하므로 FastAPI 직접 연결
   // 서버: Nginx가 /api/ 를 FastAPI로 프록시
   const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-  if (isLocal) return `http://localhost:8000/api/logs/stream`;
-  return `/api/logs/stream`;
+  if (isLocal) return `http://localhost:8000/api/logs/stream${tokenParam}`;
+  return `/api/logs/stream${tokenParam}`;
 }
 
 // ── 로그 탭 ───────────────────────────────────────────────────────────────────
@@ -112,7 +115,7 @@ function LogsTab() {
   }, [logs, autoScroll]);
 
   const clearLogs = async () => {
-    await fetch(`/api/logs/clear`, { method: "DELETE" });
+    await api.delete(`/api/logs/clear`);
     setLogs([]);
   };
 

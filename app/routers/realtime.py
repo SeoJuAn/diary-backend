@@ -2,7 +2,7 @@ import json
 import uuid
 import logging
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from app.dependencies import get_current_user
 from app.database import query_one, Transaction
@@ -274,6 +274,16 @@ async def end_session(body: EndSessionRequest, current_user: dict = Depends(get_
     keywords_text = " ".join(body.context.keywords) if body.context.keywords else ""
 
     async with Transaction() as conn:
+        existing = await conn.fetchrow(
+            "SELECT user_id FROM conversation_sessions WHERE session_id = $1",
+            body.sessionId,
+        )
+        if existing and str(existing["user_id"]) != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="다른 사용자의 세션은 수정할 수 없습니다.",
+            )
+
         # conversation_sessions upsert
         session_row = await conn.fetchrow(
             """INSERT INTO conversation_sessions (

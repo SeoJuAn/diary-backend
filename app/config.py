@@ -11,11 +11,11 @@ class Settings(BaseSettings):
     db_port: int = 5432
     db_name: str = "tjkimdb"
     db_user: str = "tjkim"
-    db_password: str = "1111"
+    db_password: str
 
     # JWT
-    jwt_access_secret: str = "diary_access_secret_key_2026"
-    jwt_refresh_secret: str = "diary_refresh_secret_key_2026"
+    jwt_access_secret: str
+    jwt_refresh_secret: str
     jwt_access_expires_in: int = 3600       # 1h in seconds
     jwt_refresh_expires_in: int = 604800    # 7d in seconds
 
