@@ -68,7 +68,7 @@ export default async function handler(req, res) {
     }
 
     // 본인 소유가 아니면 삭제 불가
-    if (version.user_id === null || version.user_id !== userId) {
+    if (version.user_id === null || String(version.user_id) !== String(userId)) {
       return res.status(403).json({
         success: false,
         error: 'You can only delete your own prompt versions',

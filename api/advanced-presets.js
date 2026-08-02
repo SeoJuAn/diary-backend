@@ -181,7 +181,7 @@ async function handleSwitch(req, res, userId) {
       throw new Error('Preset not found');
     }
     const target = checkResult.rows[0];
-    if (target.user_id !== null && target.user_id !== userId) {
+    if (target.user_id !== null && String(target.user_id) !== String(userId)) {
       const err = new Error('본인의 프리셋만 활성화할 수 있습니다.');
       err.statusCode = 403;
       throw err;
@@ -257,7 +257,7 @@ async function handleDelete(req, res, userId) {
   }
 
   // 2b. 본인 프리셋만 삭제 가능
-  if (preset.user_id !== userId) {
+  if (String(preset.user_id) !== String(userId)) {
     return res.status(403).json({
       success: false,
       error: 'You can only delete your own presets',

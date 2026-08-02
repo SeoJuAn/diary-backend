@@ -274,7 +274,7 @@ async function handleSwitch(req, res, endpoint, userId) {
       throw new Error('Version not found or does not belong to this endpoint');
     }
     const target = checkResult.rows[0];
-    if (target.user_id !== null && target.user_id !== userId) {
+    if (target.user_id !== null && String(target.user_id) !== String(userId)) {
       const err = new Error('본인의 프롬프트만 활성화할 수 있습니다.');
       err.statusCode = 403;
       throw err;

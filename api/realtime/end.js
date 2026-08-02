@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         'SELECT user_id FROM conversation_sessions WHERE session_id = $1',
         [sessionId]
       );
-      if (existing.rows.length > 0 && existing.rows[0].user_id !== userId) {
+      if (existing.rows.length > 0 && String(existing.rows[0].user_id) !== String(userId)) {
         const err = new Error('다른 사용자의 세션은 수정할 수 없습니다.');
         err.statusCode = 403;
         throw err;

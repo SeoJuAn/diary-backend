@@ -52,16 +52,16 @@ function getLevelClass(level: string): string {
   }
 }
 
-function getSseUrl(): string {
-  // EventSource는 Authorization 헤더를 보낼 수 없어 access token을 쿼리 파라미터로 전달한다.
-  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
-  if (typeof window === "undefined") return `http://localhost:8000/api/logs/stream${tokenParam}`;
+function getSseUrl(adminKey: string): string {
+  // EventSource는 헤더를 보낼 수 없어 관리자 키를 쿼리 파라미터로 전달한다.
+  // 로그 API는 일반 사용자 JWT가 아닌 별도의 관리자 키로만 접근 가능하다.
+  const keyParam = `?key=${encodeURIComponent(adminKey)}`;
+  if (typeof window === "undefined") return `http://localhost:8000/api/logs/stream${keyParam}`;
   // 로컬: Next.js가 SSE를 버퍼링하므로 FastAPI 직접 연결
   // 서버: Nginx가 /api/ 를 FastAPI로 프록시
   const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-  if (isLocal) return `http://localhost:8000/api/logs/stream${tokenParam}`;
-  return `/api/logs/stream${tokenParam}`;
+  if (isLocal) return `http://localhost:8000/api/logs/stream${keyParam}`;
+  return `/api/logs/stream${keyParam}`;
 }
 
 // ── 로그 탭 ───────────────────────────────────────────────────────────────────
@@ -70,15 +70,20 @@ function LogsTab() {
   const [filter, setFilter] = useState<LogLevel>("ALL");
   const [connected, setConnected] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [adminKey, setAdminKey] = useState<string>(() =>
+    typeof window !== "undefined" ? localStorage.getItem("adminApiKey") || "" : ""
+  );
+  const [adminKeyInput, setAdminKeyInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
+    if (!adminKey) return;
     let active = true;
 
     function connect() {
       if (!active) return;
-      const url = getSseUrl();
+      const url = getSseUrl(adminKey);
       const es = new EventSource(url);
       esRef.current = es;
 
@@ -106,7 +111,7 @@ function LogsTab() {
       esRef.current?.close();
       setConnected(false);
     };
-  }, []);
+  }, [adminKey]);
 
   useEffect(() => {
     if (autoScroll) {
@@ -114,10 +119,51 @@ function LogsTab() {
     }
   }, [logs, autoScroll]);
 
+  const saveAdminKey = () => {
+    if (!adminKeyInput.trim()) return;
+    localStorage.setItem("adminApiKey", adminKeyInput.trim());
+    setAdminKey(adminKeyInput.trim());
+    setAdminKeyInput("");
+  };
+
+  const forgetAdminKey = () => {
+    localStorage.removeItem("adminApiKey");
+    setAdminKey("");
+    setLogs([]);
+    setConnected(false);
+  };
+
   const clearLogs = async () => {
-    await api.delete(`/api/logs/clear`);
+    await api.delete(`/api/logs/clear`, { headers: { "X-Admin-Key": adminKey } });
     setLogs([]);
   };
+
+  if (!adminKey) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "24px 16px", alignItems: "center", justifyContent: "center", height: "100%" }}>
+        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
+          로그 API는 관리자 전용입니다.<br />관리자 키를 입력하세요.
+        </div>
+        <input
+          type="password"
+          value={adminKeyInput}
+          onChange={(e) => setAdminKeyInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") saveAdminKey(); }}
+          placeholder="ADMIN_API_KEY"
+          style={{
+            width: "100%", maxWidth: "260px", background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px",
+            padding: "8px 12px", outline: "none", fontSize: "12px", color: "#f0eeff",
+          }}
+        />
+        <button onClick={saveAdminKey} style={{
+          padding: "7px 16px", borderRadius: "10px", border: "none", cursor: "pointer",
+          fontSize: "12px", fontWeight: 600,
+          background: "linear-gradient(135deg, #7C5CFC, #a78bfa)", color: "white",
+        }}>연결</button>
+      </div>
+    );
+  }
 
   const filtered = filter === "ALL"
     ? logs
@@ -166,6 +212,13 @@ function LogsTab() {
           fontSize: "10px", fontFamily: "monospace",
           background: "rgba(248,113,113,0.12)", color: "rgba(248,113,113,0.7)",
         }}>CLR</button>
+
+        {/* 관리자 키 해제 */}
+        <button onClick={forgetAdminKey} title="관리자 키 해제" style={{
+          padding: "3px 8px", borderRadius: "8px", border: "none", cursor: "pointer",
+          fontSize: "10px", fontFamily: "monospace",
+          background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)",
+        }}>KEY</button>
 
         {/* 카운트 */}
         <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", fontFamily: "monospace", flexShrink: 0 }}>

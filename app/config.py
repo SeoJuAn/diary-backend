@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     # Realtime (WebRTC ephemeral token)
     openai_realtime_model: str = "gpt-realtime-2.1"
 
+    # Admin (운영 로그 등 관리자 전용 API) — 미설정 시 해당 API는 완전 비활성화됨
+    admin_api_key: str = ""
+
     class Config:
         env_file = ".env"
         extra = "ignore"
