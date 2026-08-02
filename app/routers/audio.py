@@ -8,6 +8,12 @@ from app.config import settings
 
 router = APIRouter(prefix="/api/audio", tags=["audio"])
 
+MAX_AUDIO_SIZE = 25 * 1024 * 1024  # 25MB (OpenAI Whisper 한도와 동일)
+ALLOWED_AUDIO_TYPES = {
+    "audio/mpeg", "audio/mp3", "audio/mp4", "audio/m4a", "audio/x-m4a",
+    "audio/wav", "audio/wave", "audio/webm", "audio/ogg", "video/mp4",
+}
+
 
 @router.post("/transcribe")
 async def transcribe(
@@ -15,8 +21,13 @@ async def transcribe(
     language: str = Form("ko"),
     current_user: dict = Depends(get_current_user),
 ):
+    if file.content_type and file.content_type not in ALLOWED_AUDIO_TYPES:
+        raise HTTPException(status_code=415, detail="지원하지 않는 오디오 형식입니다.")
+
     client = AsyncOpenAI(api_key=settings.openai_api_key)
-    content = await file.read()
+    content = await file.read(MAX_AUDIO_SIZE + 1)
+    if len(content) > MAX_AUDIO_SIZE:
+        raise HTTPException(status_code=413, detail="오디오 파일이 너무 큽니다 (최대 25MB).")
 
     # OpenAI SDK는 파일명/타입이 필요함
     file_tuple = (file.filename or "audio.m4a", io.BytesIO(content), file.content_type or "audio/m4a")

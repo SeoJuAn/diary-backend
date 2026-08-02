@@ -1,5 +1,6 @@
 import { query } from '../../../lib/db.js';
 import { verifyTokenFromRequest } from '../../../lib/auth.js';
+import { applyCors } from '../../../lib/cors.js';
 
 /**
  * DELETE /api/prompts/versions/:id
@@ -7,9 +8,7 @@ import { verifyTokenFromRequest } from '../../../lib/auth.js';
  */
 export default async function handler(req, res) {
   // CORS 설정
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCors(req, res, 'DELETE, OPTIONS');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

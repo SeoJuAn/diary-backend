@@ -1,14 +1,18 @@
 import { query } from '../../lib/db.js';
 import { hashPassword, signAccessToken, signRefreshToken } from '../../lib/auth.js';
+import { applyCors } from '../../lib/cors.js';
+import { checkRateLimit } from '../../lib/rateLimit.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCors(req, res, 'POST, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed. Use POST.' });
+  }
+
+  if (!checkRateLimit(req, 'auth:register', 10, 60_000)) {
+    return res.status(429).json({ success: false, error: '너무 많은 요청입니다. 잠시 후 다시 시도해주세요.' });
   }
 
   try {

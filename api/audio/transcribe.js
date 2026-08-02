@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import formidable from 'formidable';
 import fs from 'fs';
 import { verifyTokenFromRequest } from '../../lib/auth.js';
+import { applyCors } from '../../lib/cors.js';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -17,9 +18,7 @@ export const config = {
 
 export default async function handler(req, res) {
   // CORS 설정 (React Native 앱에서 호출 가능하도록)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCors(req, res, 'POST, OPTIONS');
 
   // Preflight request 처리
   if (req.method === 'OPTIONS') {

@@ -198,7 +198,7 @@ async def get_token(body: TokenRequest, current_user: dict = Depends(get_current
         )
     if not resp.is_success:
         logger.error(f"❌ OpenAI Realtime 오류: {resp.status_code} — {resp.text[:300]}")
-        raise HTTPException(status_code=resp.status_code, detail=f"OpenAI Realtime 오류: {resp.text}")
+        raise HTTPException(status_code=502, detail="Realtime 토큰 발급에 실패했습니다.")
     data = resp.json()
     token_value = data.get("value")
     if not token_value:

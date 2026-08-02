@@ -1,8 +1,13 @@
 from datetime import datetime, timezone, timedelta
 from typing import Any
+import hashlib
 import jwt
 import bcrypt
 from app.config import settings
+
+
+def hash_refresh_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def hash_password(password: str) -> str:

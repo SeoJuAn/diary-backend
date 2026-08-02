@@ -1,10 +1,9 @@
 import { query } from '../../lib/db.js';
 import { verifyTokenFromRequest } from '../../lib/auth.js';
+import { applyCors } from '../../lib/cors.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCors(req, res, 'POST, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
@@ -151,12 +150,10 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', response.status, errorText);
-      let errorData;
-      try { errorData = JSON.parse(errorText); } catch (e) { errorData = { message: errorText }; }
-      return res.status(response.status).json({
+      return res.status(502).json({
         success: false,
-        error: 'OpenAI API 오류',
-        details: errorData.error?.message || errorData.message || errorText,
+        error: 'Realtime 토큰 발급에 실패했습니다.',
+        details: process.env.NODE_ENV === 'development' ? errorText : undefined,
       });
     }
 

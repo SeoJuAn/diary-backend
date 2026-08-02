@@ -1,5 +1,6 @@
 import { query, transaction } from '../lib/db.js';
 import { verifyTokenFromRequest } from '../lib/auth.js';
+import { applyCors } from '../lib/cors.js';
 
 /**
  * Unified Advanced Presets API
@@ -10,10 +11,7 @@ import { verifyTokenFromRequest } from '../lib/auth.js';
  * DELETE /api/advanced-presets                         - Delete preset
  */
 export default async function handler(req, res) {
-  // CORS 설정
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCors(req, res, 'GET, POST, PUT, DELETE, OPTIONS');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

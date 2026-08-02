@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     # Admin (운영 로그 등 관리자 전용 API) — 미설정 시 해당 API는 완전 비활성화됨
     admin_api_key: str = ""
 
+    # 운영 환경 여부 — production이면 OpenAPI docs 비활성화
+    environment: str = "development"
+
+    # 콤마로 구분된 허용 Origin 목록 (CORS). 실제 프론트 도메인을 반드시 추가하세요.
+    cors_origins: str = "http://localhost:3000,http://localhost:3001,https://diary-backend-beta.vercel.app"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
     class Config:
         env_file = ".env"
         extra = "ignore"

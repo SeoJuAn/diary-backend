@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { verifyTokenFromRequest } from '../../lib/auth.js';
+import { applyCors } from '../../lib/cors.js';
 
 // LLM 프로바이더 설정
 const LLM_PROVIDERS = {
@@ -58,11 +59,7 @@ const DEFAULT_PROMPT = `다음 대화 내용을 분석하여 주요 컨텍스트
 결과는 간결하게 불릿 포인트 형식으로 정리해주세요.`;
 
 export default async function handler(req, res) {
-  // CORS 헤더 설정
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
+  applyCors(req, res, 'POST, OPTIONS');
   // OPTIONS 요청 처리 (preflight)
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -165,7 +162,7 @@ export default async function handler(req, res) {
     return res.status(500).json({
       success: false,
       error: '컨텍스트 추출 중 오류가 발생했습니다.',
-      details: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 }

@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { verifyTokenFromRequest } from '../lib/auth.js';
+import { applyCors } from '../lib/cors.js';
 
 // LLM 프로바이더 설정
 const LLM_PROVIDERS = {
@@ -112,10 +113,8 @@ const JSON_SCHEMA = {
 };
 
 export default async function handler(req, res) {
-  // CORS 설정 (React Native 앱에서 호출 가능하도록)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // CORS 설정 (React Native 앱은 Origin 헤더를 안 보내므로 영향 없음)
+  applyCors(req, res, 'POST, OPTIONS');
 
   // Preflight request 처리
   if (req.method === 'OPTIONS') {

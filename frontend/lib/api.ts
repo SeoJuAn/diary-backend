@@ -117,6 +117,8 @@ export const authApi = {
     api.post("/api/auth/login", data),
   refresh: (refreshToken: string) =>
     api.post("/api/auth/refresh", { refreshToken }),
+  logout: (refreshToken: string) =>
+    api.post("/api/auth/logout", { refreshToken }),
 };
 
 // ── Realtime ──
